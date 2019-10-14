@@ -26,7 +26,8 @@ from .lib import (
     get_subsets,
     get_version_from_path,
     modified_environ,
-    add_tool_to_environment
+    add_tool_to_environment,
+    split_camelcase
 )
 
 # Special naming case for subprocess since its a built-in method.
@@ -58,6 +59,7 @@ __all__ = [
     "get_version_from_path",
     "modified_environ",
     "add_tool_to_environment",
+    "split_camelcase",
 
     "subprocess"
 ]
