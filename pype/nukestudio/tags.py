@@ -11,21 +11,21 @@ from avalon import io
 log = Logger().get_logger(__name__, "nukestudio")
 
 
-def create_tag(key, value):
+def create_tag(name, data):
     """
     Creating Tag object.
 
     Args:
-        key (str): name of tag
-        value (dict): parameters of tag
+        name (str): name of tag
+        data (dict): parameters of tag
 
     Returns:
         object: Tag object
     """
 
-    tag = hiero.core.Tag(str(key))
+    tag = hiero.core.Tag(str(name))
 
-    return update_tag(tag, value)
+    return update_tag(tag, data)
 
 
 def update_tag(tag, value):
@@ -37,8 +37,8 @@ def update_tag(tag, value):
         value (dict): parameters of tag
     """
 
-    tag.setNote(value["note"])
-    tag.setIcon(str(value["icon"]["path"]))
+    tag.setNote(value.get("note", ''))
+    tag.setIcon(str(value.get("icon", {}).get("path", '')))
     mtd = tag.metadata()
     pres_mtd = value.get("metadata", None)
     if pres_mtd:
@@ -77,7 +77,7 @@ def add_tags_from_presets():
 
     # Get project assets. Currently Ftrack specific to differentiate between
     # asset builds and shots.
-    if int(os.getenv("TAG_ASSETBUILD_STARTUP", 0)) is 1:
+    if int(os.getenv("TAG_ASSETBUILD_STARTUP", 0)) == 1:
         nks_pres_tags["[AssetBuilds]"] = {}
         for asset in io.find({"type": "asset"}):
             if asset["data"]["entityType"] == "AssetBuild":
