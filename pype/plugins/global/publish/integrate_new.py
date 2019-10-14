@@ -110,7 +110,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #                 extracted_traceback[1], result["error"]
         #             )
         #         )
-        # assert all(result["success"] for result in context.data["results"]), (
+        # assert all(result["success"] for result in context.data["results"]),(
         #     "Atomicity not held, aborting.")
 
         # Assemble
@@ -322,13 +322,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         dst_padding = dst_padding_exp % index_frame_start
                         index_frame_start += 1
 
-                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail).replace("..", ".")
+                    dst = "{0}{1}{2}".format(
+                        dst_head, dst_padding, dst_tail).replace("..", ".")
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
-                repre['published_path'] = "{0}{1}{2}".format(dst_head, dst_padding_exp, dst_tail)
+                repre['published_path'] = "{0}{1}{2}".format(
+                    dst_head, dst_padding_exp, dst_tail)
                 # for imagesequence version data
                 hashes = '#' * len(dst_padding)
                 dst = os.path.normpath("{0}{1}{2}".format(
@@ -388,19 +390,23 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "representation": repre['ext']
                 }
             }
-            self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
-            self.log.debug("__ destination_list: {}".format(destination_list))
-            instance.data['destination_list'] = destination_list
             representations.append(representation)
-            self.log.debug("__ representations: {}".format(representations))
 
+        instance.data['destination_list'] = destination_list
         self.log.debug("__ representations: {}".format(representations))
+
         for rep in instance.data["representations"]:
             self.log.debug("__ represNAME: {}".format(rep['name']))
             self.log.debug("__ represPATH: {}".format(rep['published_path']))
-        io.insert_many(representations)
-        # self.log.debug("Representation: {}".format(representations))
+
+        repre_ids = io.insert_many(representations).inserted_ids
+        repre_docs = list(io.find({"$or": [{"_id": id} for id in repre_ids]}))
+
+        self.log.debug(
+        "__ repre_docs: {}".format(repre_docs))
+        instance.data["repreDocs"] = repre_docs
+
         self.log.info("Registered {} items".format(len(representations)))
 
     def integrate(self, instance):
