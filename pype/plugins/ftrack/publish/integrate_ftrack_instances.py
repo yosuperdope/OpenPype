@@ -113,6 +113,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 },
                 "assetversion_data": {
                     "version": version_number,
+                    "metadata": instance.data.get("metadata", {})
                 },
                 "component_data": component_data,
                 "component_path": comp['published_path'],
