@@ -43,6 +43,15 @@ def _update_menu_task_label(*args):
     menu.setTitle(label)
 
 
+class Pype_QAction(QAction):
+    def __init__(self, name, parent=None):
+        QAction.__init__(self, name, parent)
+
+    def eventHandler(self, event):
+        # Add the Menu to the right-click menu
+        event.menu.addAction(self)
+
+
 def install():
     """
     Installing menu into Nukestudio
@@ -72,89 +81,75 @@ def install():
 
     try:
         check_made_menu = findMenuAction(menu_name)
-    except Exception:
-        pass
-
-    if not check_made_menu:
-        menu = M.addMenu(menu_name)
-    else:
         menu = check_made_menu.menu()
+    except Exception:
+        menu = M.addMenu(menu_name)
+
+    context_label_menu = menu.addMenu(context_label)
 
     actions = [
         {
-            'parent': context_label,
-            'action': QAction('Set Context', None),
+            'parent': context_label_menu,
+            'action': Pype_QAction('Set Context', None),
             'function': contextmanager.show,
-            'icon': QIcon('icons:Position.png')
         },
         "separator",
         {
-            'action': QAction("Work Files...", None),
+            'action': Pype_QAction("Work Files...", None),
             'function': set_workfiles,
-            'icon': QIcon('icons:Position.png')
         },
         {
-            'action': QAction('Create Default Tags..', None),
+            'action': Pype_QAction('Create Default Tags..', None),
             'function': add_tags_from_presets,
-            'icon': QIcon('icons:Position.png')
         },
         "separator",
-        # {
-        #     'action': QAction('Create...', None),
-        #     'function': creator.show,
-        #     'icon': QIcon('icons:ColorAdd.png')
-        # },
-        # {
-        #     'action': QAction('Load...', None),
-        #     'function': cbloader.show,
-        #     'icon': QIcon('icons:CopyRectangle.png')
-        # },
         {
-            'action': QAction('Publish...', None),
+            'interests': ["kShowContextMenu/kTimeline",
+                           "kShowContextMenu/kSpreadsheet",
+                           "pype_menu"],
+            'action': Pype_QAction('Publish...', None),
             'function': publish.show,
-            'icon': QIcon('icons:Output.png')
+            'shortcut': "Ctrl+Alt+P"
         },
-        # {
-        #     'action': QAction('Manage...', None),
-        #     'function': cbsceneinventory.show,
-        #     'icon': QIcon('icons:ModifyMetaData.png')
-        # },
         {
-            'action': QAction('Library...', None),
+            'action': Pype_QAction('Library...', None),
             'function': libraryloader.show,
-            'icon': QIcon('icons:ColorAdd.png')
         },
         "separator",
         {
-            'action': QAction('Reload pipeline...', None),
+            'action': Pype_QAction('Reload pipeline...', None),
             'function': reload_config,
-            'icon': QIcon('icons:ColorAdd.png')
         }]
 
     # Create menu items
     for a in actions:
         add_to_menu = menu
         if isinstance(a, dict):
-            # create action
-            for k in a.keys():
-                if 'parent' in k:
-                    submenus = [sm for sm in a[k].split('/')]
-                    submenu = None
-                    for sm in submenus:
-                        if submenu:
-                            submenu.addMenu(sm)
-                        else:
-                            submenu = menu.addMenu(sm)
-                    add_to_menu = submenu
-                if 'action' in k:
-                    action = a[k]
-                elif 'function' in k:
-                    action.triggered.connect(a[k])
-                elif 'icon' in k:
-                    action.setIcon(a[k])
+            action = a["action"]
+            action.triggered.connect(a["function"])
 
-            # add action to menu
-            add_to_menu.addAction(action)
-            hiero.ui.registerAction(action)
-        elif isinstance(a, str):
+            # parent it into submenu if any
+            if 'parent' in a.keys():
+                add_to_menu = a["parent"]
+
+            # add shortcut if any
+            if 'shortcut' in a.keys():
+                action.setShortcut(a["shortcut"])
+
+            # add the action to correct interests
+            if 'interests' in a.keys():
+                for interest in a["interests"]:
+                    if "pype_menu" in interest:
+                        # add action to menu
+                        add_to_menu.addAction(action)
+                        hiero.ui.registerAction(action)
+                    else:
+                        hiero.core.events.registerInterest(
+                            interest, action.eventHandler)
+            else:
+                # add action to menu
+                add_to_menu.addAction(action)
+                hiero.ui.registerAction(action)
+
+        if isinstance(a, str):
             add_to_menu.addSeparator()
