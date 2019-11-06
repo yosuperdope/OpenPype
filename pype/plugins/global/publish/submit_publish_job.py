@@ -174,7 +174,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "JobDependency0": job["_id"],
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
-                "InitialStatus": state
+                "InitialStatus": state,
+                "Priority": job["Props"]["Pri"]
             },
             "PluginInfo": {
                 "Version": "3.6",
@@ -296,6 +297,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "session": api.Session.copy()
             }
         }
+
+        if submission_type == "muster":
+            ftrack = {
+                "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
+                "FTRACK_API_KEY": os.environ.get("FTRACK_API_KEY"),
+                "FTRACK_SERVER": os.environ.get("FTRACK_SERVER")
+            }
+            metadata.update({"ftrack": ftrack})
 
         # Ensure output dir exists
         output_dir = instance.data["outputDir"]
