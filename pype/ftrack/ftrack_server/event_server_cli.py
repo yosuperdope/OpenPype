@@ -9,11 +9,12 @@ import atexit
 import time
 from urllib.parse import urlparse
 
-import requests
 from pype.vendor import ftrack_api
 from pype.ftrack.lib import credentials
 from pype.ftrack.ftrack_server import FtrackServer
-from pype.ftrack.ftrack_server.lib import ftrack_events_mongo_settings
+from pype.ftrack.ftrack_server.lib import (
+    ftrack_events_mongo_settings, check_ftrack_url
+)
 import socket_thread
 
 
@@ -23,36 +24,6 @@ class MongoPermissionsError(Exception):
         if not message:
             message = "Exiting because have issue with acces to MongoDB"
         super().__init__(message)
-
-
-def check_ftrack_url(url, log_errors=True):
-    """Checks if Ftrack server is responding"""
-    if not url:
-        print('ERROR: Ftrack URL is not set!')
-        return None
-
-    url = url.strip('/ ')
-
-    if 'http' not in url:
-        if url.endswith('ftrackapp.com'):
-            url = 'https://' + url
-        else:
-            url = 'https://{0}.ftrackapp.com'.format(url)
-    try:
-        result = requests.get(url, allow_redirects=False)
-    except requests.exceptions.RequestException:
-        if log_errors:
-            print('ERROR: Entered Ftrack URL is not accesible!')
-        return False
-
-    if (result.status_code != 200 or 'FTRACK_VERSION' not in result.headers):
-        if log_errors:
-            print('ERROR: Entered Ftrack URL is not accesible!')
-        return False
-
-    print('DEBUG: Ftrack server {} is accessible.'.format(url))
-
-    return url
 
 
 def check_mongo_url(host, port, log_error=False):
@@ -78,10 +49,10 @@ def check_mongo_url(host, port, log_error=False):
 def validate_credentials(url, user, api):
     first_validation = True
     if not user:
-        print('ERROR: Ftrack Username is not set! Exiting.')
+        print('- Ftrack Username is not set')
         first_validation = False
     if not api:
-        print('ERROR: Ftrack API key is not set! Exiting.')
+        print('- Ftrack API key is not set')
         first_validation = False
     if not first_validation:
         return False
@@ -268,6 +239,7 @@ def main_loop(ftrack_url):
         # Run threads only if Ftrack is accessible
         if not ftrack_accessible or not mongo_accessible:
             if not mongo_accessible and not printed_mongo_error:
+                mongo_url = mongo_hostname + ":" + mongo_port
                 print("Can't access Mongo {}".format(mongo_url))
 
             if not ftrack_accessible and not printed_ftrack_error:
@@ -491,10 +463,12 @@ def main(argv):
     # Check url regex and accessibility
     ftrack_url = check_ftrack_url(ftrack_url)
     if not ftrack_url:
+        print('Exiting! < Please enter Ftrack server url >')
         return 1
 
     # Validate entered credentials
     if not validate_credentials(ftrack_url, username, api_key):
+        print('Exiting! < Please enter valid credentials >')
         return 1
 
     # Process events path
@@ -534,8 +508,4 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    try:
-        signal.signal(signal.SIGKILL, signal_handler)
-    except OSError:
-        pass
     sys.exit(main(sys.argv))
