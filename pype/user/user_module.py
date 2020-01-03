@@ -1,12 +1,11 @@
 import os
 import json
+import logging
 import getpass
 
 import appdirs
 from Qt import QtWidgets
 from .widget_user import UserWidget
-
-from pype import api as pype
 
 
 class UserModule:
@@ -16,7 +15,7 @@ class UserModule:
     cred_filename = 'user_info.json'
     env_name = "PYPE_USERNAME"
 
-    log = pype.Logger().get_logger("UserModule", "user")
+    log = logging.getLogger(self.__class__.__name__)
 
     def __init__(self, main_parent=None, parent=None):
         self.cred = {}

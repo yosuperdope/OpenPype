@@ -1,6 +1,7 @@
 import os
 import json
 import threading
+import logging
 import time
 from Qt import QtCore, QtGui, QtWidgets
 
@@ -9,10 +10,7 @@ from pypeapp import style
 from pype.ftrack import FtrackServer, check_ftrack_url, credentials
 from . import login_dialog
 
-from pype import api as pype
-
-
-log = pype.Logger().get_logger("FtrackModule", "ftrack")
+log = logging.getLogger("FtrackModule")
 
 
 class FtrackModule:

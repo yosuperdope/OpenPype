@@ -1,12 +1,10 @@
 import os
+import logging
 import datetime
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from pypeapp.lib import config
-from pype import api as pype
-# FFmpeg in PATH is required
 
-
-log = pype.Logger().get_logger("BurninWrapper", "burninwrap")
+log = logging.getLogger("BurninWrapper")
 
 
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
@@ -368,7 +366,7 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
     codec_args = ''
     if codec_data is not []:
         codec_args = " ".join(codec_data)
-        
+
     burnin.render(output_path, args=codec_args, overwrite=overwrite)
 
 

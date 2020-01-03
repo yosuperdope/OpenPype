@@ -1,7 +1,7 @@
 import os
 import sys
+import logging
 import hiero.core
-from pypeapp import Logger
 from avalon.api import Session
 from hiero.ui import findMenuAction
 
@@ -19,7 +19,7 @@ from .lib import (
     set_workfiles
 )
 
-log = Logger().get_logger(__name__, "nukestudio")
+log = logging.getLogger(__name__)
 
 self = sys.modules[__name__]
 self._change_context_menu = None

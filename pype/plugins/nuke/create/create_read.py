@@ -1,12 +1,12 @@
+import logging
 from collections import OrderedDict
 import avalon.api
 import avalon.nuke
-from pype import api as pype
 
 import nuke
 
 
-log = pype.Logger().get_logger(__name__, "nuke")
+log = logging.getLogger(__name__)
 
 
 class CrateRead(avalon.nuke.Creator):

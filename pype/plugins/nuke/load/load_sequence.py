@@ -1,11 +1,11 @@
+import logging
 import contextlib
 
 from avalon import api, io
 
 import nuke
 
-from pype.api import Logger
-log = Logger().get_logger(__name__, "nuke")
+log = logging.getLogger(__name__)
 
 
 @contextlib.contextmanager

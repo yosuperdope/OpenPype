@@ -2,10 +2,10 @@
 
 """
 
+import logging
 from avalon import api
-from pype.api import Logger
 
-log = Logger().get_logger(__name__, "nuke")
+log = logging.getLogger(__name__)
 
 
 class SetFrameRangeLoader(api.Loader):

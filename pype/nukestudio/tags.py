@@ -1,14 +1,12 @@
 import re
 import os
 import hiero
+import logging
 
-from pypeapp import (
-    config,
-    Logger
-)
+from pypeapp import config
 from avalon import io
 
-log = Logger().get_logger(__name__, "nukestudio")
+log = logging.getLogger(__name__)
 
 
 def create_tag(key, value):
@@ -58,7 +56,7 @@ def add_tags_from_presets():
         return
 
     log.debug("Setting default tags on project: {}".format(project.name()))
-    
+
     # get all presets
     presets = config.get_presets()
 

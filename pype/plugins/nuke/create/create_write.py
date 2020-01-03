@@ -1,14 +1,14 @@
+import logging
 from collections import OrderedDict
 import avalon.api
 import avalon.nuke
-from pype import api as pype
 from pype.nuke import plugin
 from pypeapp import config
 
 import nuke
 
 
-log = pype.Logger().get_logger(__name__, "nuke")
+log = logging.getLogger(__name__)
 
 
 class CreateWriteRender(plugin.PypeCreator):

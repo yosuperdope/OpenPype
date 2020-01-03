@@ -1,10 +1,9 @@
 import os
 import hiero
+import logging
 from avalon import api
-from pypeapp import Logger
 
-
-log = Logger().get_logger(__name__, "nukestudio")
+log = logging.getLogger(__name__)
 
 def file_extensions():
     return [".hrox"]

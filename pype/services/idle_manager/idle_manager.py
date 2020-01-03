@@ -1,8 +1,8 @@
 import time
+import logging
 import collections
 from Qt import QtCore
 from pynput import mouse, keyboard
-from pypeapp import Logger
 
 
 class IdleManager(QtCore.QThread):
@@ -16,7 +16,7 @@ class IdleManager(QtCore.QThread):
 
     def __init__(self):
         super(IdleManager, self).__init__()
-        self.log = Logger().get_logger(self.__class__.__name__)
+        self.log = logging.getLogger(self.__class__.__name__)
         self.signal_reset_timer.connect(self._reset_time)
         self.qaction = None
         self.failed_icon = None

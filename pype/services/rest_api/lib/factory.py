@@ -1,12 +1,11 @@
 import os
 import re
 import inspect
+import logging
 import collections
 from .lib import RestMethods
 
-from pypeapp import Logger
-
-log = Logger().get_logger("RestApiFactory")
+log = logging.getLogger("RestApiFactory")
 
 
 def prepare_fullpath(path, prefix):

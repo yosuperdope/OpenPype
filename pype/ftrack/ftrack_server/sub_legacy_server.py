@@ -2,15 +2,15 @@ import os
 import sys
 import time
 import datetime
+import logging
 import signal
 import threading
 
 from ftrack_server import FtrackServer
 import ftrack_api
 from ftrack_api.event.hub import EventHub
-from pypeapp import Logger
 
-log = Logger().get_logger("Event Server Legacy")
+log = logging.getLogger("Event Server Legacy")
 
 
 class TimerChecker(threading.Thread):

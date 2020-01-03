@@ -1,8 +1,7 @@
-from pype import api as pype
+import logging
 from pypeapp import Anatomy, config
 
-
-log = pype.Logger().get_logger(__name__, "nuke")
+log = logging.getLogger(__name__)
 
 
 def get_anatomy(**kwarg):

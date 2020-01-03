@@ -1,6 +1,7 @@
 import os
 import re
 import queue
+import logging
 import collections
 
 from pype.ftrack.lib.io_nonsingleton import DbConnector
@@ -8,7 +9,7 @@ from pype.ftrack.lib.io_nonsingleton import DbConnector
 import avalon
 import avalon.api
 from avalon.vendor import toml
-from pypeapp import Logger, Anatomy
+from pypeapp import Anatomy
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
@@ -16,7 +17,7 @@ from pymongo import UpdateOne
 import ftrack_api
 
 
-log = Logger().get_logger(__name__)
+log = logging.getLogger(__name__)
 
 
 # Current schemas for avalon types

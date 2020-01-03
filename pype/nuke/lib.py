@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import getpass
+import logging
 from collections import OrderedDict
 
 from avalon import api, io, lib
@@ -23,8 +24,7 @@ from .presets import (
 )
 # TODO: remove get_anatomy and import directly Anatomy() here
 
-from pypeapp import Logger
-log = Logger().get_logger(__name__, "nuke")
+log = logging.getLogger("nuke.lib")
 
 self = sys.modules[__name__]
 self._project = None

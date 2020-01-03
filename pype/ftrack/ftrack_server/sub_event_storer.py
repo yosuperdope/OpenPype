@@ -1,6 +1,7 @@
 import os
 import sys
 import datetime
+import logging
 import signal
 import socket
 import pymongo
@@ -10,9 +11,8 @@ from ftrack_server import FtrackServer
 from pype.ftrack.ftrack_server.lib import get_ftrack_event_mongo_info
 from pype.ftrack.lib.custom_db_connector import DbConnector
 from session_storer import StorerSession
-from pypeapp import Logger
 
-log = Logger().get_logger("Event storer")
+log = logging.getLogger("Event storer")
 
 url, database, table_name = get_ftrack_event_mongo_info()
 
@@ -93,7 +93,7 @@ def trigger_sync(event):
         "$set": {"pype_data.is_processed": True}
     }
     dbcon.update_many(query, set_dict)
-    
+
     selections = []
     for project in projects:
         if project["status"] != "active":

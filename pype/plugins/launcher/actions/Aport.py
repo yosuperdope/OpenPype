@@ -1,11 +1,12 @@
 import os
 import acre
+import logging
 
 from avalon import api, lib
 import pype.api as pype
 from pype.aport import lib as aportlib
 
-log = pype.Logger().get_logger(__name__, "aport")
+log = logging.getLogger(__name__)
 
 
 class Aport(api.Action):

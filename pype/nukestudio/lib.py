@@ -1,14 +1,13 @@
 import os
 import sys
 import hiero
+import logging
 import pyblish.api
 import avalon.api as avalon
 from avalon.vendor.Qt import (QtWidgets, QtGui)
 import pype.api as pype
-from pypeapp import Logger
 
-
-log = Logger().get_logger(__name__, "nukestudio")
+log = logging.getLogger(__name__)
 
 cached_process = None
 

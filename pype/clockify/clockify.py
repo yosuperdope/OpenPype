@@ -1,6 +1,7 @@
 import os
 import threading
-from pypeapp import style, Logger
+import logging
+from pypeapp import style
 from Qt import QtWidgets
 from . import ClockifySettings, ClockifyAPI, MessageWidget
 
@@ -8,7 +9,7 @@ from . import ClockifySettings, ClockifyAPI, MessageWidget
 class ClockifyModule:
 
     def __init__(self, main_parent=None, parent=None):
-        self.log = Logger().get_logger(self.__class__.__name__, "PypeTray")
+        self.log = logging.getLogger(self.__class__.__name__)
 
         self.main_parent = main_parent
         self.parent = parent

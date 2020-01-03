@@ -6,9 +6,7 @@ import subprocess
 from operator import itemgetter
 import ftrack_api
 from pype.ftrack import BaseAction
-from pypeapp import Logger, config
-
-log = Logger().get_logger(__name__)
+from pypeapp import config
 
 
 class DJVViewAction(BaseAction):

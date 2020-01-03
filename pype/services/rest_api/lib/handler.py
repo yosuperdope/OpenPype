@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import logging
 import datetime
 import traceback
 import http.server
@@ -11,9 +12,7 @@ from .lib import RestMethods, CallbackResult, RequestInfo
 from .exceptions import AbortException
 from . import RestApiFactory, Splitter
 
-from pypeapp import Logger
-
-log = Logger().get_logger("RestApiHandler")
+log = logging.getLogger("RestApiHandler")
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):

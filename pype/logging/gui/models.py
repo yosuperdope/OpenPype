@@ -1,9 +1,9 @@
 import os
+import logging
 from Qt import QtCore
-from pypeapp import Logger
 from pypeapp.lib.log import _bootstrap_mongo_log
 
-log = Logger().get_logger("LogModel", "LoggingModule")
+log = logging.getLogger("LogModel")
 
 
 class LogModel(QtCore.QAbstractItemModel):

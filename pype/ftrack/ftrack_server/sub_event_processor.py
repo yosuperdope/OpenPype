@@ -1,15 +1,15 @@
 import os
 import sys
 import datetime
+import logging
 import signal
 import socket
 import pymongo
 
 from ftrack_server import FtrackServer
 from pype.ftrack.ftrack_server.session_processor import ProcessSession
-from pypeapp import Logger
 
-log = Logger().get_logger("Event processor")
+log = logging.getLogger("Event processor")
 
 
 def main(args):

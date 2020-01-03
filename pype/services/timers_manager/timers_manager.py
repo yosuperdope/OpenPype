@@ -1,7 +1,7 @@
+import logging
 from Qt import QtCore
 from .widget_user_idle import WidgetUserIdle
 from pypeapp.lib.config import get_presets
-from pypeapp import Logger
 
 
 class Singleton(type):
@@ -29,7 +29,7 @@ class TimersManager(metaclass=Singleton):
     last_task = None
 
     def __init__(self, tray_widget, main_widget):
-        self.log = Logger().get_logger(self.__class__.__name__)
+        self.log = logging.getLogger(self.__class__.__name__)
         self.tray_widget = tray_widget
         self.main_widget = main_widget
         self.widget_user_idle = WidgetUserIdle(self)

@@ -19,9 +19,8 @@ from ftrack_api.logging import LazyLogMessage as L
 
 from pype.ftrack.lib.custom_db_connector import DbConnector
 from pype.ftrack.ftrack_server.lib import get_ftrack_event_mongo_info
-from pypeapp import Logger
 
-log = Logger().get_logger("Session processor")
+log = logging.getLogger("Session processor")
 
 
 class ProcessEventHub(ftrack_api.event.hub.EventHub):

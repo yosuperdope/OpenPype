@@ -1,15 +1,15 @@
 import os
 import argparse
+import logging
 from Qt import QtGui, QtWidgets
 from avalon.tools import libraryloader
-from pypeapp import Logger
 from avalon import io
 from launcher import launcher_widget, lib as launcher_lib
 
 
 class AvalonApps:
     def __init__(self, main_parent=None, parent=None):
-        self.log = Logger().get_logger(__name__)
+        self.log = logging.getLogger(self.__class__.__name__)
         self.main_parent = main_parent
         self.parent = parent
         self.app_launcher = None

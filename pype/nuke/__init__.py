@@ -8,13 +8,12 @@ from avalon import api as avalon
 from avalon.tools import workfiles
 from pyblish import api as pyblish
 from pype.nuke import menu
-from pypeapp import Logger
 from . import lib
 
 
 self = sys.modules[__name__]
 self.workfiles_launched = False
-log = Logger().get_logger(__name__, "nuke")
+log = logging.getLogger(__name__)
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
@@ -113,7 +112,7 @@ def install():
     family_states = [
         "write",
         "review",
-        "nukenodes" 
+        "nukenodes"
         "gizmo"
     ]
 

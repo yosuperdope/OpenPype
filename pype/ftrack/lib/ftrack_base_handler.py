@@ -1,6 +1,7 @@
-import functools
 import time
-from pypeapp import Logger
+import functools
+import logging
+
 import ftrack_api
 from pype.ftrack.ftrack_server import session_processor
 
@@ -38,7 +39,7 @@ class BaseHandler(object):
 
     def __init__(self, session, plugins_presets={}):
         '''Expects a ftrack_api.Session instance'''
-        self.log = Logger().get_logger(self.__class__.__name__)
+        self.log = logging.getLogger(self.__class__.__name__)
         if not(
             isinstance(session, ftrack_api.session.Session) or
             isinstance(session, session_processor.ProcessSession)

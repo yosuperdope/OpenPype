@@ -1,13 +1,14 @@
 import os
 import socket
 import socketserver
+import logging
 from Qt import QtCore
 
 from .lib import RestApiFactory, Handler
 from .base_class import route, register_statics
-from pypeapp import config, Logger
+from pypeapp import config
 
-log = Logger().get_logger("RestApiServer")
+log = logging.getLogger("RestApiServer")
 
 
 class RestApiServer:

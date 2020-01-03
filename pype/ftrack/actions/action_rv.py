@@ -5,12 +5,10 @@ import logging
 import traceback
 import json
 
-from pypeapp import Logger, config
+from pypeapp import config
 from pype.ftrack import BaseAction
 import ftrack_api
 from avalon import io, api
-
-log = Logger().get_logger(__name__)
 
 
 class RVAction(BaseAction):
@@ -144,7 +142,7 @@ class RVAction(BaseAction):
         try:
             items = self.get_interface_items(session, entities)
         except Exception:
-            log.error(traceback.format_exc())
+            self.log.error(traceback.format_exc())
             job["status"] = "failed"
         else:
             job["status"] = "done"
@@ -238,7 +236,7 @@ class RVAction(BaseAction):
         try:
             paths = self.get_file_paths(session, event)
         except Exception:
-            log.error(traceback.format_exc())
+            self.log.error(traceback.format_exc())
             job["status"] = "failed"
         else:
             job["status"] = "done"
@@ -254,7 +252,7 @@ class RVAction(BaseAction):
 
         args.extend(paths)
 
-        log.info("Running rv: {}".format(args))
+        self.log.info("Running rv: {}".format(args))
 
         subprocess.Popen(args)
 

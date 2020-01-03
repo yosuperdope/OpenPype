@@ -1,12 +1,12 @@
 import os
 import toml
 import time
+import logging
 from pype.ftrack import AppAction
 from avalon import lib
-from pypeapp import Logger
 from pype.lib import get_all_avalon_projects
 
-log = Logger().get_logger(__name__)
+log = logging.getLogger(__name__)
 
 
 def registerApp(app, session, plugins_presets):

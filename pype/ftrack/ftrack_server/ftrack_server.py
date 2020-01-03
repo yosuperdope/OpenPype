@@ -6,10 +6,10 @@ import ftrack_api
 import time
 import logging
 import inspect
-from pypeapp import Logger, config
+from pypeapp import config
 
 
-log = Logger().get_logger(__name__)
+log = logging.getLogger("FtrackServer")
 
 """
 # Required - Needed for connection to Ftrack
@@ -41,9 +41,9 @@ class FtrackServer:
                 server.run_server()
                 ..
         """
-        # set Ftrack logging to Warning only - OPTIONAL
-        ftrack_log = logging.getLogger("ftrack_api")
-        ftrack_log.setLevel(logging.WARNING)
+        # # set Ftrack logging to Warning only - OPTIONAL
+        # ftrack_log = logging.getLogger("ftrack_api")
+        # ftrack_log.setLevel(logging.WARNING)
 
         env_key = "FTRACK_ACTIONS_PATH"
         if server_type.lower() == 'event':
@@ -148,8 +148,8 @@ class FtrackServer:
             paths = paths_str.split(os.pathsep)
             self.set_files(paths)
 
-            log.info(60*"*")
-            log.info('Registration of actions/events has finished!')
+            log.debug(60*"*")
+            log.debug('Registration of actions/events has finished!')
 
         # keep event_hub on session running
         self.session.event_hub.wait()

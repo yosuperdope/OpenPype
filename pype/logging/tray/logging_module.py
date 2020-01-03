@@ -1,11 +1,10 @@
 import os
+import logging
+
 from Qt import QtWidgets
-
-from pypeapp import Logger
-
 from ..gui.app import LogsWindow
 
-log = Logger().get_logger("LoggingModule", "logging")
+log = logging.getLogger("LoggingModule")
 
 
 class LoggingModule:

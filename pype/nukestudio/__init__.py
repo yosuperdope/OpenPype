@@ -1,5 +1,5 @@
 import os
-from pypeapp import Logger
+import logging
 from avalon import api as avalon
 from pyblish import api as pyblish
 
@@ -30,7 +30,7 @@ __all__ = [
 ]
 
 # get logger
-log = Logger().get_logger(__name__, "nukestudio")
+log = logging.getLogger(__name__)
 
 
 ''' Creating all important host related variables '''

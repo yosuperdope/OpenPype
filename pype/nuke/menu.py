@@ -1,10 +1,11 @@
+import logging
 import nuke
 from avalon.api import Session
 
 from pype.nuke import lib
-from pypeapp import Logger
 
-log = Logger().get_logger(__name__, "nuke")
+log = logging.getLogger(__name__)
+
 
 def install():
     menubar = nuke.menu("Nuke")
