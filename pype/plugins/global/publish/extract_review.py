@@ -1,9 +1,7 @@
 import os
-
 import pyblish.api
-from pype.vendor import clique
+import clique
 import pype.api
-from pypeapp import config
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -22,42 +20,65 @@ class ExtractReview(pyblish.api.InstancePlugin):
     families = ["review"]
     hosts = ["nuke", "maya", "shell"]
 
+    outputs = {}
+    ext_filter = []
+
     def process(self, instance):
-        # adding plugin attributes from presets
-        publish_presets = config.get_presets()["plugins"]["global"]["publish"]
-        plugin_attrs = publish_presets[self.__class__.__name__]
-        output_profiles = plugin_attrs.get("outputs", {})
+        to_width = 1920
+        to_height = 1080
+
+        output_profiles = self.outputs or {}
 
         inst_data = instance.data
         fps = inst_data.get("fps")
         start_frame = inst_data.get("frameStart")
-
-        self.log.debug("Families In: `{}`".format(instance.data["families"]))
+        resolution_width = inst_data.get("resolutionWidth", to_width)
+        resolution_height = inst_data.get("resolutionHeight", to_height)
+        pixel_aspect = inst_data.get("pixelAspect", 1)
+        self.log.debug("Families In: `{}`".format(inst_data["families"]))
 
         # get representation and loop them
-        representations = instance.data["representations"]
+        representations = inst_data["representations"]
 
         # filter out mov and img sequences
         representations_new = representations[:]
         for repre in representations:
-            if repre['ext'] in plugin_attrs["ext_filter"]:
+            if repre['ext'] in self.ext_filter:
                 tags = repre.get("tags", [])
+
+                if "thumbnail" in tags:
+                    continue
 
                 self.log.info("Try repre: {}".format(repre))
 
                 if "review" in tags:
                     staging_dir = repre["stagingDir"]
+
+                    # iterating preset output profiles
                     for name, profile in output_profiles.items():
+                        repre_new = repre.copy()
+                        ext = profile.get("ext", None)
+                        p_tags = profile.get('tags', [])
+                        self.log.info("p_tags: `{}`".format(p_tags))
+
+                        # adding control for presets to be sequence
+                        # or single file
+                        is_sequence = ("sequence" in p_tags) and (ext in (
+                            "png", "jpg", "jpeg"))
+
                         self.log.debug("Profile name: {}".format(name))
 
-                        ext = profile.get("ext", None)
                         if not ext:
                             ext = "mov"
                             self.log.warning(
-                                "`ext` attribute not in output profile. Setting to default ext: `mov`")
+                                str("`ext` attribute not in output "
+                                    "profile. Setting to default ext: `mov`"))
 
-                        self.log.debug("instance.families: {}".format(instance.data['families']))
-                        self.log.debug("profile.families: {}".format(profile['families']))
+                        self.log.debug(
+                            "instance.families: {}".format(
+                                instance.data['families']))
+                        self.log.debug(
+                            "profile.families: {}".format(profile['families']))
 
                         if any(item in instance.data['families'] for item in profile['families']):
                             if isinstance(repre["files"], list):
@@ -78,22 +99,27 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 filename = repre["files"].split(".")[0]
 
                             repr_file = filename + "_{0}.{1}".format(name, ext)
-
                             full_output_path = os.path.join(
                                 staging_dir, repr_file)
+
+                            if is_sequence:
+                                filename_base = filename + "_{0}".format(name)
+                                repr_file = filename_base + ".%08d.{0}".format(
+                                    ext)
+                                repre_new["sequence_file"] = repr_file
+                                full_output_path = os.path.join(
+                                    staging_dir, filename_base, repr_file)
 
                             self.log.info("input {}".format(full_input_path))
                             self.log.info("output {}".format(full_output_path))
 
-                            repre_new = repre.copy()
-
                             new_tags = [x for x in tags if x != "delete"]
-                            p_tags = profile.get('tags', [])
-                            self.log.info("p_tags: `{}`".format(p_tags))
+
                             # add families
                             [instance.data["families"].append(t)
-                            for t in p_tags
-                             if t not in instance.data["families"]]
+                                for t in p_tags
+                                if t not in instance.data["families"]]
+
                             # add to
                             [new_tags.append(t) for t in p_tags
                              if t not in new_tags]
@@ -111,8 +137,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             # necessary input data
                             # adds start arg only if image sequence
                             if isinstance(repre["files"], list):
-                                input_args.append("-start_number {0} -framerate {1}".format(
-                                    start_frame, fps))
+                                input_args.append(
+                                    "-start_number {0} -framerate {1}".format(
+                                        start_frame, fps))
 
                             input_args.append("-i {}".format(full_input_path))
 
@@ -147,21 +174,143 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                         )
 
                             output_args = []
+                            codec_args = profile.get('codec', [])
+                            output_args.extend(codec_args)
                             # preset's output data
                             output_args.extend(profile.get('output', []))
 
+                            # defining image ratios
+                            resolution_ratio = float(resolution_width / (
+                                resolution_height * pixel_aspect))
+                            delivery_ratio = float(to_width) / float(to_height)
+                            self.log.debug(resolution_ratio)
+                            self.log.debug(delivery_ratio)
+
+                            # get scale factor
+                            scale_factor = to_height / (
+                                resolution_height * pixel_aspect)
+                            self.log.debug(scale_factor)
+
                             # letter_box
-                            # TODO: add to documentation
-                            lb = profile.get('letter_box', None)
-                            if lb:
-                                output_args.append(
-                                    "-filter:v drawbox=0:0:iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black,drawbox=0:ih-round((ih-(iw*(1/{0})))/2):iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black".format(lb))
+                            lb = profile.get('letter_box', 0)
+                            if lb != 0:
+                                ffmpet_width = to_width
+                                ffmpet_height = to_height
+                                if "reformat" not in p_tags:
+                                    lb /= pixel_aspect
+                                    if resolution_ratio != delivery_ratio:
+                                        ffmpet_width = resolution_width
+                                        ffmpet_height = int(
+                                            resolution_height * pixel_aspect)
+                                else:
+                                    if resolution_ratio != delivery_ratio:
+                                        lb /= scale_factor
+                                    else:
+                                        lb /= pixel_aspect
+
+                                output_args.append(str(
+                                    "-filter:v scale={0}x{1}:flags=lanczos,"
+                                    "setsar=1,drawbox=0:0:iw:"
+                                    "round((ih-(iw*(1/{2})))/2):t=fill:"
+                                    "c=black,drawbox=0:ih-round((ih-(iw*("
+                                    "1/{2})))/2):iw:round((ih-(iw*(1/{2})))"
+                                    "/2):t=fill:c=black").format(
+                                        ffmpet_width, ffmpet_height, lb))
 
                             # In case audio is longer than video.
                             output_args.append("-shortest")
 
                             # output filename
                             output_args.append(full_output_path)
+
+                            self.log.debug(
+                                "__ pixel_aspect: `{}`".format(pixel_aspect))
+                            self.log.debug(
+                                "__ resolution_width: `{}`".format(
+                                    resolution_width))
+                            self.log.debug(
+                                "__ resolution_height: `{}`".format(
+                                    resolution_height))
+
+                            # scaling none square pixels and 1920 width
+                            if "reformat" in p_tags:
+                                if resolution_ratio < delivery_ratio:
+                                    self.log.debug("lower then delivery")
+                                    width_scale = int(to_width * scale_factor)
+                                    width_half_pad = int((
+                                        to_width - width_scale)/2)
+                                    height_scale = to_height
+                                    height_half_pad = 0
+                                else:
+                                    self.log.debug("heigher then delivery")
+                                    width_scale = to_width
+                                    width_half_pad = 0
+                                    scale_factor = float(to_width) / float(
+                                        resolution_width)
+                                    self.log.debug(scale_factor)
+                                    height_scale = int(
+                                        resolution_height * scale_factor)
+                                    height_half_pad = int(
+                                        (to_height - height_scale)/2)
+
+                                self.log.debug(
+                                    "__ width_scale: `{}`".format(width_scale))
+                                self.log.debug(
+                                    "__ width_half_pad: `{}`".format(
+                                        width_half_pad))
+                                self.log.debug(
+                                    "__ height_scale: `{}`".format(
+                                        height_scale))
+                                self.log.debug(
+                                    "__ height_half_pad: `{}`".format(
+                                        height_half_pad))
+
+                                scaling_arg = str(
+                                    "scale={0}x{1}:flags=lanczos,"
+                                    "pad={2}:{3}:{4}:{5}:black,setsar=1"
+                                        ).format(width_scale, height_scale,
+                                                 to_width, to_height,
+                                                 width_half_pad,
+                                                 height_half_pad
+                                                 )
+
+                                vf_back = self.add_video_filter_args(
+                                    output_args, scaling_arg)
+                                # add it to output_args
+                                output_args.insert(0, vf_back)
+
+                            # baking lut file application
+                            lut_path = instance.data.get("lutPath")
+                            if lut_path and ("bake-lut" in p_tags):
+                                # removing Gama info as it is all baked in lut
+                                gamma = next((g for g in input_args
+                                              if "-gamma" in g), None)
+                                if gamma:
+                                    input_args.remove(gamma)
+
+                                # create lut argument
+                                lut_arg = "lut3d=file='{}'".format(
+                                    lut_path.replace(
+                                        "\\", "/").replace(":/", "\\:/")
+                                        )
+                                lut_arg += ",colormatrix=bt601:bt709"
+
+                                vf_back = self.add_video_filter_args(
+                                    output_args, lut_arg)
+                                # add it to output_args
+                                output_args.insert(0, vf_back)
+                                self.log.info("Added Lut to ffmpeg command")
+                                self.log.debug(
+                                    "_ output_args: `{}`".format(output_args))
+
+                            if is_sequence:
+                                stg_dir = os.path.dirname(full_output_path)
+
+                                if not os.path.exists(stg_dir):
+                                    self.log.debug(
+                                        "creating dir: {}".format(stg_dir))
+                                    os.mkdir(stg_dir)
+
                             mov_args = [
                                 os.path.join(
                                     os.environ.get(
@@ -183,8 +332,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 'ext': ext,
                                 'files': repr_file,
                                 "tags": new_tags,
-                                "outputName": name
+                                "outputName": name,
+                                "codec": codec_args,
+                                "_profile": profile,
+                                "resolutionHeight": resolution_height,
+                                "resolutionWidth": resolution_width,
                             })
+                            if is_sequence:
+                                repre_new.update({
+                                    "stagingDir": stg_dir,
+                                    "files": os.listdir(stg_dir)
+                                })
+
                             if repre_new.get('preview'):
                                 repre_new.pop("preview")
                             if repre_new.get('thumbnail'):
@@ -207,3 +366,40 @@ class ExtractReview(pyblish.api.InstancePlugin):
         instance.data["representations"] = representations_new
 
         self.log.debug("Families Out: `{}`".format(instance.data["families"]))
+
+    def add_video_filter_args(self, args, inserting_arg):
+        """
+        Fixing video filter argumets to be one long string
+
+        Args:
+            args (list): list of string arguments
+            inserting_arg (str): string argument we want to add
+                                 (without flag `-vf`)
+
+        Returns:
+            str: long joined argument to be added back to list of arguments
+
+        """
+        # find all video format settings
+        vf_settings = [p for p in args
+                       for v in ["-filter:v", "-vf"]
+                       if v in p]
+        self.log.debug("_ vf_settings: `{}`".format(vf_settings))
+
+        # remove them from output args list
+        for p in vf_settings:
+            self.log.debug("_ remove p: `{}`".format(p))
+            args.remove(p)
+            self.log.debug("_ args: `{}`".format(args))
+
+        # strip them from all flags
+        vf_fixed = [p.replace("-vf ", "").replace("-filter:v ", "")
+                    for p in vf_settings]
+
+        self.log.debug("_ vf_fixed: `{}`".format(vf_fixed))
+        vf_fixed.insert(0, inserting_arg)
+        self.log.debug("_ vf_fixed: `{}`".format(vf_fixed))
+        # create new video filter setting
+        vf_back = "-vf " + ",".join(vf_fixed)
+
+        return vf_back
