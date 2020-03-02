@@ -1,14 +1,13 @@
-import os
-
 import pyblish.api
 
 from avalon import fusion
+from pype.plugin import PreCollectorOrder
 
 
 class CollectCurrentCompFusion(pyblish.api.ContextPlugin):
     """Collect current comp"""
 
-    order = pyblish.api.CollectorOrder - 0.4
+    order = PreCollectorOrder - 0.4
     label = "Collect Current Comp"
     hosts = ["fusion"]
 

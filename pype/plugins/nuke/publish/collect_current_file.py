@@ -1,10 +1,11 @@
 import pyblish.api
+from pype.plugin import PreCollectorOrder
 
 
 class CollectCurrentFile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
-    order = pyblish.api.CollectorOrder - 0.5
+    order = PreCollectorOrder - 0.5
     label = "Collect Current File"
     hosts = ["nuke"]
 

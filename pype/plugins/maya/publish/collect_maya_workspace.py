@@ -1,14 +1,14 @@
 import os
 
 import pyblish.api
-
+from pype.plugin import PreCollectorOrder
 from maya import cmds
 
 
 class CollectMayaWorkspace(pyblish.api.ContextPlugin):
     """Inject the current workspace into context"""
 
-    order = pyblish.api.CollectorOrder - 0.5
+    order = PreCollectorOrder - 0.5
     label = "Maya Workspace"
 
     hosts = ['maya']

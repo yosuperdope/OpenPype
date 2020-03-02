@@ -50,6 +50,7 @@ import pyblish.api
 
 from avalon import maya, api
 import pype.maya.lib as lib
+from pype.plugin import PreCollectorOrder
 
 
 R_SINGLE_FRAME = re.compile(r'^(-?)\d+$')
@@ -90,7 +91,7 @@ ImagePrefixes = {
 class CollectMayaRender(pyblish.api.ContextPlugin):
     """Gather all publishable render layers from renderSetup"""
 
-    order = pyblish.api.CollectorOrder + 0.01
+    order = PreCollectorOrder + 0.01
     hosts = ["maya"]
     label = "Collect Render Layers"
 

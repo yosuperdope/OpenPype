@@ -4,12 +4,13 @@ import pyblish.api
 import avalon.api
 import os
 from pype.maya import lib
+from pype.plugin import PreCollectorOrder
 
 
 class CollectMayaScene(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
-    order = pyblish.api.CollectorOrder - 0.1
+    order = PreCollectorOrder - 0.1
     label = "Maya Workfile"
     hosts = ['maya']
 

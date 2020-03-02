@@ -1,14 +1,13 @@
 import toml
-
 import nuke
-
 import pyblish.api
+from pype.plugin import PreCollectorOrder
 
 
 class CollectReadLegacy(pyblish.api.ContextPlugin):
     """Collect legacy read nodes."""
 
-    order = pyblish.api.CollectorOrder
+    order = PreCollectorOrder
     label = "Collect Read Legacy"
     hosts = ["nuke", "nukeassist"]
 

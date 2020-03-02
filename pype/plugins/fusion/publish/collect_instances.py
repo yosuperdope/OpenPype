@@ -1,6 +1,7 @@
 import os
 
 import pyblish.api
+from pype.plugin import PreCollectorOrder
 
 
 def get_comp_render_range(comp):
@@ -27,7 +28,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder
+    order = PreCollectorOrder
     label = "Collect Instances"
     hosts = ["fusion"]
 

@@ -3,6 +3,7 @@ import hou
 import pyblish.api
 
 from avalon.houdini import lib
+from pype.plugin import PreCollectorOrder
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -24,7 +25,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder - 0.01
+    order = PreCollectorOrder - 0.01
     label = "Collect Instances"
     hosts = ["houdini"]
 

@@ -5,6 +5,7 @@ import pyblish.api
 from avalon import api
 
 from pypeapp import PypeLauncher
+from pype.plugin import PreCollectorOrder
 
 
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
@@ -13,7 +14,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     `PYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
     """
-    order = pyblish.api.CollectorOrder - 0.0001
+    order = PreCollectorOrder - 0.0001
     targets = ["filesequence"]
     label = "Collect rendered frames"
 

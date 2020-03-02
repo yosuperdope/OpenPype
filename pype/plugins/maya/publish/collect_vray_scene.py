@@ -5,13 +5,14 @@ import pyblish.api
 from maya import cmds
 
 from avalon import api
+from pype.plugin import PreCollectorOrder
 
 
 class CollectVRayScene(pyblish.api.ContextPlugin):
     """Collect all information prior for exporting vrscenes
     """
 
-    order = pyblish.api.CollectorOrder
+    order = PreCollectorOrder
     label = "Collect VRay Scene"
     hosts = ["maya"]
 

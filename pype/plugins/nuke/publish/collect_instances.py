@@ -4,13 +4,14 @@ import nuke
 import pyblish.api
 from avalon import io, api
 from avalon.nuke import get_avalon_knob_data
+from pype.plugin import PreCollectorOrder
 
 
 @pyblish.api.log
 class CollectNukeInstances(pyblish.api.ContextPlugin):
     """Collect all nodes with Avalon knob."""
 
-    order = pyblish.api.CollectorOrder + 0.01
+    order = PreCollectorOrder + 0.01
     label = "Collect Instances"
     hosts = ["nuke", "nukeassist"]
 

@@ -15,6 +15,7 @@ Provides:
 
 import os
 import pyblish.api
+from pype.plugin import PreCollectorOrder
 from avalon import io
 import json
 import logging
@@ -30,7 +31,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
     """
 
     label = "Collect Context - SA Publish"
-    order = pyblish.api.CollectorOrder - 0.49
+    order = PreCollectorOrder
     hosts = ["standalonepublisher"]
 
     def process(self, context):

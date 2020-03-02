@@ -1,6 +1,7 @@
 from maya import cmds
 
 import pyblish.api
+from pype.plugin import PreCollectorOrder
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -24,7 +25,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     """
 
     label = "Collect Instances"
-    order = pyblish.api.CollectorOrder
+    order = PreCollectorOrder
     hosts = ["maya"]
 
     def process(self, context):
@@ -122,7 +123,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
             self.log.debug("DATA: \"%s\" " % instance.data)
-            
+
 
         def sort_by_family(instance):
             """Sort by family"""
