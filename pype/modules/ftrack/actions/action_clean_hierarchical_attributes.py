@@ -12,10 +12,6 @@ class CleanHierarchicalAttrsAction(BaseAction):
     role_list = ["Pypeclub", "Administrator", "Project Manager"]
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
-    all_project_entities_query = (
-        "select id, name, parent_id, link"
-        " from TypedContext where project_id is \"{}\""
-    )
     cust_attr_query = (
         "select value, entity_id from CustomAttributeValue "
         "where entity_id in ({}) and configuration_id is \"{}\""
@@ -23,45 +19,69 @@ class CleanHierarchicalAttrsAction(BaseAction):
 
     def discover(self, session, entities, event):
         """Show only on project entity."""
-        if len(entities) == 1 and entities[0].entity_type.lower() == "project":
-            return True
+        valid_ids = []
+        for entity_info in event["data"].get("selection", []):
+            if entity_info["entityType"].lower() in ("task", "show"):
+                valid_ids.append(entity_info["entityId"])
+
+        for entity in entities:
+            if (
+                entity["id"] in valid_ids
+                and entity.entity_type.lower() != "task"
+            ):
+                return True
+
         return False
 
     def launch(self, session, entities, event):
-        project = entities[0]
+        event_entities = event["data"].get("selection", [])
+        self.log.debug(
+            "Filtering selected entities to process. {}".format(event_entities)
+        )
 
-        user_message = "This may take some time"
-        self.show_message(event, user_message, result=True)
-        self.log.debug("Preparing entities for cleanup.")
-
-        all_entities = session.query(
-            self.all_project_entities_query.format(project["id"])
-        ).all()
-
-        all_entities_ids = [
-            "\"{}\"".format(entity["id"])
-            for entity in all_entities
+        filtered_entities = [
+            entity for entity in entities
             if entity.entity_type.lower() != "task"
         ]
-        self.log.debug(
-            "Collected {} entities to process.".format(len(all_entities_ids))
+
+        if not filtered_entities:
+            # This should never happen if launched from ftrack...
+            msg = "None of selected entities is valid for this action."
+            self.log.info(msg)
+            return {
+                "success": False,
+                "message": msg
+            }
+
+        # Show message to user
+        msg = (
+            "Preparing entities for cleanup. This may take some time."
         )
-        entity_ids_joined = ", ".join(all_entities_ids)
+        self.log.debug(msg)
+        self.show_message(event, msg, result=True)
+
+        entity_ids = [
+            entity["id"] for entity in filtered_entities
+        ]
+        joined_entity_ids = ", ".join(entity_ids)
+        self.log.debug("Collected {} entities to process. {}".format(
+            len(entity_ids), joined_entity_ids
+        ))
 
         attrs, hier_attrs = get_avalon_attr(session)
 
+        max_len = 0
         for attr in hier_attrs:
-            configuration_key = attr["key"]
-            self.log.debug(
-                "Looking for cleanup of custom attribute \"{}\"".format(
-                    configuration_key
-                )
-            )
+            key = attr["key"]
+            if len(key) > max_len:
+                max_len = len(key)
+
+        for attr in hier_attrs:
             configuration_id = attr["id"]
             call_expr = [{
                 "action": "query",
                 "expression": self.cust_attr_query.format(
-                    entity_ids_joined, configuration_id
+                    joined_entity_ids, configuration_id
                 )
             }]
 
@@ -74,13 +94,17 @@ class CleanHierarchicalAttrsAction(BaseAction):
                     data[item["entity_id"]] = value
 
             if not data:
-                self.log.debug(
-                    "Nothing to clean for \"{}\".".format(configuration_key)
-                )
+                self.log.debug("{} - nothing to clean".format(
+                    attr["key"].ljust(max_len)
+                ))
                 continue
 
-            self.log.debug("Cleaning up {} values for \"{}\".".format(
-                len(data), configuration_key
+            changes_len = len(data)
+            ending = ""
+            if changes_len > 1:
+                ending += "s"
+            self.log.debug("{} - cleaning up {} value{}.".format(
+                attr["key"].ljust(max_len), changes_len, ending
             ))
             for entity_id, value in data.items():
                 entity_key = collections.OrderedDict({
