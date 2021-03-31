@@ -42,7 +42,7 @@ jinxed = [
     { version = "^1.0.1", markers = "sys_platform == 'linux'" }
 ]
 python3-xlib = { version="*", markers = "sys_platform == 'linux'"}
-NodeGraphQt = { git = "https://github.com/jezscha/NodeGraphQt.git", branch = "develop"}
+NodeGraphQt = { git = "https://github.com/jchanvfx/NodeGraphQt.git"}
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"
