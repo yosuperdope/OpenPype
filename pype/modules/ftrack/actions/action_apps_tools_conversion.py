@@ -616,12 +616,15 @@ class PypeAppToolsPrep(BaseAction):
             "type": "label",
             "value": "Tools:"
         })
+        underscoreless_tools = {
+            variant.replace("_", ""): variant
+            for variant in tool_variants
+        }
         for tool_item in sorted(tool_items):
             item = {
                 "label": tool_item,
                 "name": tool_item,
                 "type": "enumerator",
-                "value": self.pop_key,
                 "data": tools_data
             }
             if tool_item not in tool_variants:
@@ -633,8 +636,14 @@ class PypeAppToolsPrep(BaseAction):
                     listed_str[idx] = "/"
                     tool_item = "".join(listed_str)
 
+            value = self.pop_key
             if tool_item in tool_variants:
-                item["value"] = tool_item
+                value = tool_item
+            elif tool_item in underscoreless_tools:
+                value = underscoreless_tools[tool_item]
+
+            item["value"] = value
+
             items.append(item)
 
         items.append({"type": "label", "value": "---"})
@@ -651,6 +660,11 @@ class PypeAppToolsPrep(BaseAction):
                 "label": app_variant,
                 "value": app_variant
             })
+
+        underscoreless_apps = {
+            variant.replace("_", ""): variant
+            for variant in app_variants
+        }
         for app_item in sorted(app_items):
             item = {
                 "label": app_item,
@@ -659,16 +673,23 @@ class PypeAppToolsPrep(BaseAction):
                 "value": self.pop_key,
                 "data": apps_data
             }
-            if app_item not in tool_variants:
+            if app_item not in app_variants:
                 app_item = app_item.replace(".", "-")
                 if "_" in app_item:
                     item_parts = app_item.split("_")
                     group_name = item_parts.pop(0)
                     app_item = "/".join((group_name, "_".join(item_parts)))
 
+            value = self.pop_key
             if app_item in app_variants:
-                item["value"] = app_item
+                value = app_item
+            elif app_item in underscoreless_apps:
+                value = underscoreless_apps[app_item]
+
+            item["value"] = value
+
             items.append(item)
+
         return {
             "items": items,
             "title": "Tools and apps mappings"
