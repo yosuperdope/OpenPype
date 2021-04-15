@@ -28,7 +28,7 @@ class PypeAppToolsPrep(BaseAction):
         "Store values of tools_env and applications custom attributes."
     )
 
-    role_list = ["Pypeclub"]
+    role_list = ["Pypeclub", "Administrator"]
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     # Something like constants
