@@ -15,12 +15,10 @@ from pype.modules.ftrack.lib import (
 
 class PypeAppToolsPrep(BaseAction):
     """Helper action to convert new old values of tools and apps.
-
     Tools and Applications custom attributes must be changed and to keep
     values on entities we have to store their values before change of custom
     attribute's configurations. Then change configurations to match new way of
     applications and tools definitions. Then reapply the values.
-
     Action will ask for mapping of old value -> new value.
     """
     identifier = "pype.app.tools.preparation"
@@ -34,6 +32,7 @@ class PypeAppToolsPrep(BaseAction):
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     # Something like constants
+    action_key = "__action__"
     tools_key = "tools_env"
     app_key = "applications"
     pop_key = "__pop___"
@@ -69,15 +68,23 @@ class PypeAppToolsPrep(BaseAction):
         items.append({
             "label": "Action",
             "type": "enumerator",
-            "name": "action",
+            "name": self.action_key,
             "value": "store_values",
-            "data": [{
-                "label": "Store values",
-                "value": "store_values"
-            }, {
-                "label": "Restore values",
-                "value": "restore_values"
-            }]
+            "data": [
+                {
+                    "label": "1.) Store values",
+                    "value": "store_values"
+                }, {
+                    "label": "2.) Convert pype-config",
+                    "value": "convert_pype_config"
+                }, {
+                    "label": "3.) Trigger Create/Update Custom Attributes",
+                    "value": "create_update_cust_attrs"
+                }, {
+                    "label": "4.) Restore values",
+                    "value": "restore_values"
+                }
+            ]
         })
 
         return {
@@ -90,9 +97,233 @@ class PypeAppToolsPrep(BaseAction):
         if not values:
             return
 
-        if values["action"] == "store_values":
+        action_name = values.get(self.action_key)
+        if action_name == "store_values":
             return self.store_values(session, event)
-        return self.restore_values(session, event)
+
+        elif action_name == "convert_pype_config":
+            return self.convert_pype_config(session, event)
+
+        elif action_name == "create_update_cust_attrs":
+            return self.trigger_create_update_cust_attrs(session, event)
+
+        elif action_name == "restore_values":
+            return self.restore_values(session, event)
+
+        return {
+            "success": False,
+            "message": "Unknown action \"{}\"".format(action_name)
+        }
+
+    def _app_tools_mapping_items(self, event, invalid_apps, invalid_tools):
+        if not invalid_apps and not invalid_tools:
+            return {}, {}, {}
+
+        values = event["data"]["values"]
+
+        invalid_apps_mapping = {}
+        all_valid = True
+        for app_name in invalid_apps:
+            values_key = "__app__{}".format(app_name)
+            if values_key in values:
+                value = values[values_key]
+                if "_" not in value:
+                    all_valid = False
+                invalid_apps_mapping[app_name] = value
+            else:
+                all_valid = False
+
+        invalid_tools_mapping = {}
+        for tool_name in invalid_tools:
+            values_key = "__tool__{}".format(tool_name)
+            if values_key in values:
+                value = values[values_key]
+                if "_" not in value:
+                    all_valid = False
+                invalid_tools_mapping[tool_name] = value
+            else:
+                all_valid = False
+
+        if all_valid:
+            return {}, invalid_apps_mapping, invalid_tools_mapping
+
+        items = []
+        items.append({
+            "type": "hidden",
+            "name": self.action_key,
+            "value": "convert_pype_config"
+        })
+        items.append({
+            "type": "label",
+            "value": (
+                "## Config contain application or tool names"
+                " that do not contain underscore."
+            )
+        })
+        if invalid_apps_mapping or invalid_tools_mapping:
+            items.append({
+                "type": "label",
+                "value": (
+                    "<b>WARNING:</b> You've entered some invalid values."
+                    " Please check again."
+                )
+            })
+        if invalid_apps:
+            items.append({"type": "label", "value": "---"})
+            items.append({
+                "type": "label",
+                "value": "### Applications"
+            })
+            for app_name in invalid_apps:
+                values_key = "__app__{}".format(app_name)
+                value = invalid_apps_mapping.get(app_name) or app_name
+                items.append({
+                    "label": app_name,
+                    "type": "text",
+                    "name": values_key,
+                    "value": value,
+                    "placeholder": (
+                        "Enter new name of application with underscore."
+                    )
+                })
+
+        if invalid_tools:
+            items.append({"type": "label", "value": "---"})
+            items.append({
+                "type": "label",
+                "value": "### Tools"
+            })
+
+            for tool_name in invalid_tools:
+                values_key = "__tool__{}".format(tool_name)
+                value = invalid_tools_mapping.get(tool_name) or tool_name
+                items.append({
+                    "label": tool_name,
+                    "type": "text",
+                    "name": values_key,
+                    "value": value,
+                    "placeholder": "Enter new name of tool with underscore."
+                })
+        items_data = {
+            "items": items,
+            "title": "New tools and apps mappings"
+        }
+        return items_data, invalid_apps_mapping, invalid_tools_mapping
+
+    def convert_pype_config(self, session, event):
+        values = event["data"]["values"]
+
+        pype_config_dir = os.environ["PYPE_CONFIG"]
+        environments_dir = os.path.join(pype_config_dir, "environments")
+        launchers_dir = os.path.join(pype_config_dir, "launchers")
+        global_presets_dir = os.path.join(
+            pype_config_dir, "presets", "global"
+        )
+        applications_filepath = os.path.join(
+            global_presets_dir, "applications.json"
+        )
+        tools_filepath = os.path.join(
+            global_presets_dir, "tools.json"
+        )
+
+        applications_data = {}
+        if os.path.exists(applications_filepath):
+            with open(applications_filepath, "r") as file_stream:
+                applications_data = json.load(file_stream)
+
+        tools_data = {}
+        if os.path.exists(tools_filepath):
+            with open(tools_filepath, "r") as file_stream:
+                tools_data = json.load(file_stream)
+
+        invalid_apps = [
+            app_name
+            for app_name in applications_data.keys()
+            if "_" not in app_name
+        ]
+        invalid_tools = [
+            tool_name
+            for tool_name in tools_data.keys()
+            if "_" not in tool_name
+        ]
+
+        items_data, invalid_apps_mapping, invalid_tools_mapping = (
+            self._app_tools_mapping_items(event, invalid_apps, invalid_tools)
+        )
+        if items_data:
+            return items_data
+
+        if applications_data:
+            new_data = {}
+            for key, value in applications_data.items():
+                if key not in invalid_apps_mapping:
+                    new_key = key.replace(".", "-")
+                else:
+                    # Skip key if mapping was not set
+                    new_key = invalid_apps_mapping[key].replace(".", "-")
+                    if not new_key:
+                        continue
+
+                new_data[new_key] = value
+
+            with open(applications_filepath, "w") as file_stream:
+                json.dump(new_data, file_stream, indent=4)
+
+        if tools_data:
+            new_data = {}
+            for key, value in tools_data.items():
+                if key not in invalid_tools_mapping:
+                    new_key = key.replace(".", "-")
+                else:
+                    # Skip key if mapping was not set
+                    new_key = invalid_tools_mapping[key].replace(".", "-")
+                    if not new_key:
+                        continue
+                new_data[new_key] = value
+
+            with open(tools_filepath, "w") as file_stream:
+                json.dump(new_data, file_stream, indent=4)
+
+        for filename in os.listdir(environments_dir):
+            basename, ext = os.path.splitext(filename)
+            if not ext:
+                continue
+
+            if basename in invalid_apps_mapping:
+                basename = invalid_apps_mapping[basename]
+
+            elif basename in invalid_tools_mapping:
+                basename = invalid_tools_mapping[basename]
+
+            if not basename:
+                continue
+
+            new_filename = basename.replace(".", "-") + ext
+
+            old_filepath = os.path.join(environments_dir, filename)
+            new_filepath = os.path.join(environments_dir, new_filename)
+            os.rename(old_filepath, new_filepath)
+
+        for filename in os.listdir(launchers_dir):
+            basename, ext = os.path.splitext(filename)
+            if ext != ".toml":
+                continue
+
+            if basename in invalid_apps_mapping:
+                basename = invalid_apps_mapping[basename]
+                if not basename:
+                    continue
+
+            new_filename = basename.replace(".", "-") + ext
+            if new_filename == filename:
+                continue
+
+            old_filepath = os.path.join(launchers_dir, filename)
+            new_filepath = os.path.join(launchers_dir, new_filename)
+            os.rename(old_filepath, new_filepath)
+
+    def trigger_create_update_cust_attrs(self, session, event):
+        self.trigger_action("create.update.attributes", event)
 
     def store_values(self, session, event):
         user_id = event["source"]["user"]["id"]
@@ -246,7 +477,7 @@ class PypeAppToolsPrep(BaseAction):
         items = []
         items.append({
             "type": "hidden",
-            "name": "action",
+            "name": self.action_key,
             "value": "restore_values"
         })
         items.append({
