@@ -369,6 +369,8 @@ class DictMutableKeysEntity(EndpointEntity):
             label = metadata_labels.get(_key)
             if label:
                 children_label_by_id[child_entity.id] = label
+
+            child_entity.validate_values_for_state(state)
             child_entity.set_override_state(state)
 
         self.children_label_by_id = children_label_by_id
