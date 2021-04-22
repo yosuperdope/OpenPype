@@ -221,13 +221,7 @@ class InputEntity(EndpointEntity):
         self._override_state = state
         # Ignore if is dynamic item and use default in that case
         if not self.is_dynamic_item and not self.is_in_dynamic_item:
-            if state > OverrideState.DEFAULTS:
-                if not self.has_default_value:
-                    raise DefaultsNotDefined(self)
-
-            elif state > OverrideState.STUDIO:
-                if not self.had_studio_override:
-                    raise StudioDefaultsNotDefined(self)
+            self.validate_values_for_state(state)
 
         if state is OverrideState.STUDIO:
             self._has_studio_override = (
