@@ -834,6 +834,10 @@ class ItemEntity(BaseItemEntity):
         return self.root_item.get_entity_from_path(path)
 
     @abstractmethod
+    def validate_values_for_state(self, state):
+        pass
+
+    @abstractmethod
     def update_default_value(self, parent_values):
         """Fill default values on startup or on refresh.
 

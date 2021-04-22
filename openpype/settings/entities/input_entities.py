@@ -65,6 +65,15 @@ class EndpointEntity(ItemEntity):
                     return NOT_SET
         return self._settings_value()
 
+    def validate_values_for_state(self, state):
+        if state > OverrideState.DEFAULTS:
+            if not self.has_default_value:
+                raise DefaultsNotDefined(self)
+
+        elif state > OverrideState.STUDIO:
+            if not self.had_studio_override:
+                raise StudioDefaultsNotDefined(self)
+
     def on_change(self):
         for callback in self.on_change_callbacks:
             callback()

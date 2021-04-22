@@ -140,6 +140,9 @@ class PathEntity(ItemEntity):
     def value(self):
         return self.child_obj.value
 
+    def validate_values_for_state(self, state):
+        self.child_obj.validate_values_for_state(state)
+
     def set_override_state(self, state):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
@@ -333,6 +336,10 @@ class ListStrictEntity(ItemEntity):
             if child_obj.has_project_override:
                 return True
         return False
+
+    def validate_values_for_state(self, state):
+        for child_obj in self.children:
+            child_obj.validate_values_for_state(state)
 
     def set_override_state(self, state):
         # Trigger override state change of root if is not same

@@ -248,6 +248,10 @@ class DictImmutableKeysEntity(ItemEntity):
         self._metadata_are_modified = current_metadata != metadata
         self._current_metadata = current_metadata
 
+    def validate_values_for_state(self, state):
+        for child_obj in self.non_gui_children.values():
+            child_obj.validate_values_for_state(state)
+
     def set_override_state(self, state):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
