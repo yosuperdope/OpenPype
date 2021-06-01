@@ -37,6 +37,7 @@ class StandAlonePublishAction(PypeModule, ITrayAction):
         args = get_pype_execute_args("standalonepublisher")
         kwargs = {}
         if platform.system().lower() == "darwin":
+            """Launch publisher as new process on MacOS."""
             new_args = ["open", "-a", args.pop(0), "--args"]
             new_args.extend(args)
             args = new_args
