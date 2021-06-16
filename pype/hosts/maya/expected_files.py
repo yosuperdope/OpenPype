@@ -800,6 +800,17 @@ class ExpectedFilesRedshift(AExpectedFiles):
         # todo: find out how to detect multichannel exr for redshift
         for aov in rs_aovs:
             enabled = self.maya_is_true(cmds.getAttr("{}.enabled".format(aov)))
+            aov_name = cmds.getAttr("{}.name".format(aov))
+            light_groups = cmds.getAttr("{}.lightGroupList".format(aov))
+            # 0 - None, 1 - All, 2 - Reminder
+            # 0 - only light_groups
+            # 1 - aov + light groups
+            # 2 - aov_others + light groups
+            global_aov = cmds.getAttr("{}.globalAov".format(aov))
+            if cmds.getAttr("{}.globalAov".format(aov)) == 2:
+                # add {aov}_other
+                ...
+
             for override in self.get_layer_overrides(
                     "{}.enabled".format(aov)
             ):
@@ -813,6 +824,10 @@ class ExpectedFilesRedshift(AExpectedFiles):
                         cmds.getAttr("redshiftOptions.exrForceMultilayer")
                 ):
                     if cmds.getAttr("%s.name" % aov) in self.unmerged_aovs:
+                        if cmds.getAttr("{}.lightGroupList".format(aov)):
+                            for light_group in light_groups:
+                                # iterate over light groups
+                                pass
                         enabled_aovs.append(
                             (cmds.getAttr("%s.name" % aov), default_ext)
                         )
