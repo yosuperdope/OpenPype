@@ -98,7 +98,9 @@ class SyncProjectListWidget(ProjectListWidget):
         menu = QtWidgets.QMenu(self)
         actions_mapping = {}
 
-        can_edit = self.model.can_edit
+        active_site = self.sync_server.get_active_site(self.project_name)
+        remote_site = self.sync_server.get_remote_site(self.project_name)
+        can_edit = get_local_site_id() in (active_site, remote_site)
 
         if can_edit:
             if self.sync_server.is_project_paused(self.project_name):

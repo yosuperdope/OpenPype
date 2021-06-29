@@ -13,7 +13,6 @@ from openpype.api import get_local_site_id
 
 from openpype.modules.sync_server.tray import lib
 
-
 log = PypeLogger().get_logger("SyncServer")
 
 
@@ -136,6 +135,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         """
         if self.is_editing or not self.is_running:
             return
+        self.is_editing = True
         self.refresh_started.emit()
         self.beginResetModel()
         self._data = []
@@ -149,6 +149,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                               representations)
         self.endResetModel()
         self.refresh_finished.emit()
+        self.is_editing = False
 
     def tick(self):
         """
@@ -210,24 +211,21 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             order = 1
         else:
             order = -1
+        previous_sort = dict(self.sort_keys)
 
-        backup_sort = dict(self.sort)
-
-        self.sort = {self.SORT_BY_COLUMN[index]: order}  # reset
+        self.sort_keys = {self.SORT_BY_COLUMN[index]: order}  # reset
         # add last one
-        for key, val in backup_sort.items():
+        for key, val in previous_sort.items():
             if key != '_id' and key != self.SORT_BY_COLUMN[index]:
-                self.sort[key] = val
+                self.sort_keys[key] = val
                 break
         # add default one
-        self.sort['_id'] = 1
-
+        self.sort_keys['_id'] = 1
         self.query = self.get_query()
         # import json
         # log.debug(json.dumps(self.query, indent=4).\
         #           replace('False', 'false').\
         #           replace('True', 'true').replace('None', 'null'))
-
         representations = self.dbcon.aggregate(self.query)
         self.refresh(representations)
 
@@ -342,6 +340,12 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                 return index
         return None
 
+    def convert_time(self, value):
+        try:
+            return value.strftime("%Y%m%dT%H%M%SZ")
+        except AttributeError:
+            pass
+
 
 class SyncRepresentationSummaryModel(_SyncRepresentationModel):
     """
@@ -455,7 +459,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
-        self.sort = self.DEFAULT_SORT
+        self.sort_keys = self.DEFAULT_SORT
 
         self.query = self.get_query()
         self.default_query = list(self.get_query())
@@ -551,12 +555,12 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
 
             local_updated = remote_updated = None
             if repre.get('updated_dt_local'):
-                local_updated = \
-                    repre.get('updated_dt_local').strftime("%Y%m%dT%H%M%SZ")
+                local_updated = self.convert_time(
+                    repre.get('updated_dt_local'))
 
             if repre.get('updated_dt_remote'):
-                remote_updated = \
-                    repre.get('updated_dt_remote').strftime("%Y%m%dT%H%M%SZ")
+                remote_updated = self.convert_time(
+                    repre.get('updated_dt_remote'))
 
             avg_progress_remote = lib.convert_progress(
                 repre.get('avg_progress_remote', '0'))
@@ -747,7 +751,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
             )
 
         aggr.extend(
-            [{"$sort": self.sort},
+            [{"$sort": self.sort_keys},
              {
                 '$facet': {
                     'paginatedResults': [{'$skip': self._rec_loaded},
@@ -985,7 +989,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
-        self.sort = self.DEFAULT_SORT
+        self.sort_keys = self.DEFAULT_SORT
 
         self.query = self.get_query()
         representations = self.dbcon.aggregate(self.query)
@@ -1078,14 +1082,12 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
             for file in files:
                 local_updated = remote_updated = None
                 if repre.get('updated_dt_local'):
-                    local_updated = \
-                        repre.get('updated_dt_local').strftime(
-                            "%Y%m%dT%H%M%SZ")
+                    local_updated = self.convert_time(
+                        repre.get('updated_dt_local'))
 
                 if repre.get('updated_dt_remote'):
-                    remote_updated = \
-                        repre.get('updated_dt_remote').strftime(
-                            "%Y%m%dT%H%M%SZ")
+                    remote_updated = self.convert_time(
+                        repre.get('updated_dt_remote'))
 
                 remote_progress = lib.convert_progress(
                     repre.get('progress_remote', '0'))
@@ -1250,7 +1252,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
             print(self.column_filtering)
 
         aggr.extend([
-            {"$sort": self.sort},
+            {"$sort": self.sort_keys},
             {
                 '$facet': {
                     'paginatedResults': [{'$skip': self._rec_loaded},
