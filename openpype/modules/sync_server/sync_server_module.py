@@ -884,9 +884,10 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
             Return provider name for site (unique name across all projects.
         """
-        sites = {self.DEFAULT_SITE: "local_drive",
-                 self.LOCAL_SITE: "local_drive",
-                 get_local_site_id(): "local_drive"}
+        sites = {}
+        for site_name in [self.DEFAULT_SITE, self.LOCAL_SITE,
+                          get_local_site_id()]:
+            sites[site_name] = "local_drive"
 
         if site in sites.keys():
             return sites[site]
@@ -900,8 +901,8 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         sys_sett = get_system_settings()
         sync_sett = sys_sett["modules"].get("sync_server")
-        for site, detail in sync_sett.get("sites", {}).items():
-            sites[site] = detail.get("provider")
+        for sync_site, detail in sync_sett.get("sites", {}).items():
+            sites[sync_site] = detail["provider"]
 
         return sites.get(site, 'N/A')
 
