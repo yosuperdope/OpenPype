@@ -1,0 +1,180 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "menu",
+    "label": "Menu",
+    "children": [
+        {
+            "type": "text",
+            "key": "menu_title",
+            "label": "Menu Title"
+        },
+        {
+            "type": "list",
+            "key": "menu_items",
+            "label": "Menu Items",
+            "object_type": {
+                "type": "dict",
+                "children": [
+                    {
+                        "type": "enum",
+                        "key": "type",
+                        "label": "Type",
+                        "enum_items": [
+                            { "action": "action" },
+                            { "separator": "separator" },
+                            { "menu": "menu" }
+                        ]
+                    },
+                    {
+                        "type": "text",
+                        "key": "title",
+                        "label": "Title"
+                    },
+                    {
+                        "type": "list",
+                        "key": "tags",
+                        "label": "Tags",
+                        "object_type": "text"
+                    },
+                    {
+                        "type": "text",
+                        "key": "tooltip",
+                        "label": "Tooltip"
+                    },
+                    {
+                        "type": "text",
+                        "key": "icon",
+                        "label": "Icon"
+                    },
+                    {
+                        "type": "enum",
+                        "key": "sourcetype",
+                        "label": "Source Type",
+                        "enum_items": [
+                            { "python": "python" },
+                            { "file": "file" }
+                        ]
+                    },
+                    {
+                        "type": "text",
+                        "key": "command",
+                        "label": "Command"
+                    },
+                    {
+                        "label": "Items (if type is menu)",
+                        "key": "items",
+                        "type": "list",
+                        "collapsible": true,
+                        "object_type": {
+                            "type": "dict",
+                            "children": [
+                                {
+                                    "type": "enum",
+                                    "key": "type",
+                                    "label": "Type",
+                                    "enum_items": [
+                                        { "action": "action" },
+                                        { "separator": "separator" },
+                                        { "menu": "menu" }
+                                    ]
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "title",
+                                    "label": "Title"
+                                },
+                                {
+                                    "type": "list",
+                                    "key": "tags",
+                                    "label": "Tags",
+                                    "object_type": "text"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "tooltip",
+                                    "label": "Tooltip"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "icon",
+                                    "label": "Icon"
+                                },
+                                {
+                                    "type": "enum",
+                                    "key": "sourcetype",
+                                    "label": "Source Type",
+                                    "enum_items": [
+                                        { "python": "python" },
+                                        { "file": "file" }
+                                    ]
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "command",
+                                    "label": "Command"
+                                },
+                                {
+                                    "label": "Items (if type is menu)",
+                                    "key": "items",
+                                    "type": "list",
+                                    "collapsible": true,
+                                    "object_type": {
+                                        "type": "dict",
+                                        "children": [
+                                            {
+                                                "type": "enum",
+                                                "key": "type",
+                                                "label": "Type",
+                                                "enum_items": [
+                                                    { "action": "action" },
+                                                    { "separator": "separator" },
+                                                    { "menu": "menu" }
+                                                ]
+                                            },
+                                            {
+                                                "type": "text",
+                                                "key": "title",
+                                                "label": "Title"
+                                            },
+                                            {
+                                                "type": "list",
+                                                "key": "tags",
+                                                "label": "Tags",
+                                                "object_type": "text"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "key": "tooltip",
+                                                "label": "Tooltip"
+                                            },
+                                            {
+                                                "type": "text",
+                                                "key": "icon",
+                                                "label": "Icon"
+                                            },                                            
+                                            {
+                                                "type": "enum",
+                                                "key": "sourcetype",
+                                                "label": "Source Type",
+                                                "enum_items": [
+                                                    { "python": "python" },
+                                                    { "file": "file" }
+                                                ]
+                                            },
+                                            {
+                                                "type": "text",
+                                                "key": "command",
+                                                "label": "Command"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

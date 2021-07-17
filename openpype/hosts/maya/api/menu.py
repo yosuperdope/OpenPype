@@ -4,7 +4,10 @@ import logging
 
 from avalon.vendor.Qt import QtWidgets, QtGui
 from avalon.maya import pipeline
-from openpype.api import BuildWorkfile
+from openpype.api import (
+    BuildWorkfile,
+    get_project_settings
+)
 import maya.cmds as cmds
 
 self = sys.modules[__name__]
@@ -100,12 +103,21 @@ def deferred():
         return
 
     # load configuration of custom menu
-    config_path = os.path.join(os.path.dirname(__file__), "menu.json")
-    config = scriptsmenu.load_configuration(config_path)
+    settings = get_project_settings(os.environ['AVALON_PROJECT'])
+    config = settings['maya'].get('menu', {}).get('menu_items', [])
+
+    # process title
+    title = settings['maya'].get('menu', {}).get('menu_title')
+    # expand env vars
+    if '$' in title:
+        title = os.environ.get(title.replace('$', ''))
+    # default to menu name
+    if not title:
+        title = self._menu.title()
 
     # run the launcher for Maya menu
     studio_menu = launchformaya.main(
-        title=self._menu.title(),
+        title=title,
         objectName=self._menu
     )
 

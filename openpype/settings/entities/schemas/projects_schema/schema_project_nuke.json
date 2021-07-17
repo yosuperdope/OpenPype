@@ -120,6 +120,10 @@
         {
             "type": "schema",
             "name": "schema_publish_gui_filter"
+        },
+        {
+            "type": "schema",
+            "name": "schema_menu"
         }
     ]
 }

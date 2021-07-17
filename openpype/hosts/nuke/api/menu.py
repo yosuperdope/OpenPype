@@ -4,11 +4,13 @@ from avalon.api import Session
 
 from .lib import WorkfileSettings
 from openpype.api import Logger, BuildWorkfile, get_current_project_settings
+
 from openpype.tools import workfiles
 
 log = Logger().get_logger(__name__)
 
 menu_label = os.environ["AVALON_LABEL"]
+
 
 def install():
     menubar = nuke.menu("Nuke")
@@ -84,9 +86,11 @@ def install():
     )
     log.debug("Adding menu item: {}".format(name))
 
-
     # adding shortcuts
     add_shortcuts_from_presets()
+
+    # add studio menu
+    install_studio_menu()
 
 
 def uninstall():
@@ -97,6 +101,58 @@ def uninstall():
     for item in menu.items():
         log.info("Removing menu item: {}".format(item.name()))
         menu.removeItem(item.name())
+
+
+def install_studio_menu():
+    try:
+        import scriptsmenu.launchfornuke as launchfornuke
+        import scriptsmenu.scriptsmenu as scriptsmenu
+    except ImportError:
+        log.warning(
+            "Skipping studio.menu install, because "
+            "'scriptsmenu' module seems unavailable."
+        )
+        return
+
+    # load configuration of custom menu
+    settings = get_current_project_settings()
+    config = settings['nuke'].get('menu', {}).get('menu_items', [])
+
+    # process title
+    title = settings['nuke'].get('menu', {}).get('menu_title')
+    # expand env vars
+    if '$' in title:
+        title = os.environ.get(title.replace('$', ''))
+    # default to menu name
+    if not title:
+        title = menu_label.title()
+
+    # run the launcher for Nuke menu
+    studio_menu = launchfornuke.main(title=title)
+
+    # apply configuration
+    studio_menu.build_from_configuration(studio_menu, config)
+    add_gizmo_menu(studio_menu)
+
+
+def add_gizmo_menu(menu, search_dir='gizmos', title="Gizmos"):
+    """ adds all gizmos in a directory to a menu
+    """
+    sub_menu = menu.add_menu(parent=menu,
+                             title=title)
+    # search all NUKE_PATHs
+    for paths in os.getenv('NUKE_PATH').split(';'):
+        # if the dir name matches the search dir, continue
+        if os.path.basename(paths) == search_dir:
+            for file in os.listdir(paths):
+                # add every file in the dir that's a gizmo
+                if file.endswith('.gizmo'):
+                    gizmo = file.replace('.gizmo', '')
+                    menu.add_script(parent=sub_menu,
+                                    title=gizmo,
+                                    command='nuke.tcl("{}")'.format(gizmo),
+                                    sourcetype='python',
+                                    tags=["gizmo"])
 
 
 def add_shortcuts_from_presets():
