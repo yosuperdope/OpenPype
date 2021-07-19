@@ -132,6 +132,10 @@
             "optional": true,
             "active": true
         },
+        "ValidateFrameRange": {
+            "enabled": true,
+            "disabled_tasks": []
+        },
         "ValidateShaderName": {
             "enabled": false,
             "regex": "(?P<asset>.*)_(.*)_SHD"

@@ -41,6 +41,31 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "ValidateFrameRange",
+            "label": "ValidateFrameRange",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "Turn off validation for specified tasks."
+                },
+                {
+                    "type": "list",
+                    "key": "disabled_tasks",
+                    "label": "Disabled Tasks",
+                    "object_type": "text"
+                }
+            ]
+        },
+
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "ValidateShaderName",
             "label": "ValidateShaderName",
             "checkbox_key": "enabled",

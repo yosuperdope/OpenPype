@@ -25,6 +25,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                 "review",
                 "yeticache"]
     optional = True
+    disabled_tasks = []
     actions = [openpype.api.RepairAction]
 
     def process(self, instance):
@@ -33,6 +34,15 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
             self.log.info((
                 "Skipping frame range validation because "
                 "tile rendering is enabled."
+            ))
+            return
+
+        # skip specified tasks from settings
+        task = context.data.get("anatomyData", {}).get("task")
+        if task in self.disabled_tasks:
+            self.log.info((
+                "Skipping frame range validation because "
+                "task {} is disabled for validation in settings.".format(task)
             ))
             return
 
