@@ -60,6 +60,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_workspace"
+                },                
+                {
+                    "type": "schema",
                     "name": "schema_project_ftrack"
                 },
                 {

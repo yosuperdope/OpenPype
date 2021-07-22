@@ -1,0 +1,20 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "workspace",
+    "label": "Workspace",
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict-modifiable",
+            "collapsible": true,
+            "key": "task_defaults",
+            "label": "Task Defaults",
+            "is_group": true,
+            "object_type": {
+                "type": "list",
+                "object_type": "text"
+            }
+        }   
+    ]
+}

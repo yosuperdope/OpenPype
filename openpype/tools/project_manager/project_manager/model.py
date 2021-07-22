@@ -13,7 +13,10 @@ from .constants import (
 )
 from .style import ResourceCache
 
-from openpype.lib import CURRENT_DOC_SCHEMAS
+from openpype.lib import (
+    CURRENT_DOC_SCHEMAS,
+    workspace
+)
 from pymongo import UpdateOne, DeleteOne
 from avalon.vendor import qtawesome
 from Qt import QtCore, QtGui
@@ -1379,6 +1382,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         if bulk_writes:
             project_col.bulk_write(bulk_writes)
+
+        # create workspaces
+        workspace.create_project_workspaces(project_name)
 
         self.refresh_project()
 
