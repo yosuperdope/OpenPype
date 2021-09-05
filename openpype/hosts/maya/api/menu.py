@@ -9,9 +9,9 @@ from openpype.api import (
     get_project_settings
 )
 import maya.cmds as cmds
+from openpype.settings import get_project_settings
 
 self = sys.modules[__name__]
-self._menu = os.environ.get("AVALON_LABEL")
 
 
 log = logging.getLogger(__name__)
@@ -19,9 +19,9 @@ log = logging.getLogger(__name__)
 
 def _get_menu(menu_name=None):
     """Return the menu instance if it currently exists in Maya"""
-
     if menu_name is None:
-        menu_name = self._menu
+        menu_name = pipeline._menu
+
     widgets = dict((
         w.objectName(), w) for w in QtWidgets.QApplication.allWidgets())
     menu = widgets.get(menu_name)
@@ -59,7 +59,7 @@ def deferred():
             )
 
         # Find the pipeline menu
-        top_menu = _get_menu(pipeline._menu)
+        top_menu = _get_menu()
 
         # Try to find workfile tool action in the menu
         workfile_action = None
@@ -86,11 +86,36 @@ def deferred():
         if workfile_action:
             top_menu.removeAction(workfile_action)
 
-    log.info("Attempting to install scripts menu..")
+    def remove_project_manager():
+        top_menu = _get_menu()
+
+        # Try to find "System" menu action in the menu
+        system_menu = None
+        for action in top_menu.actions():
+            if action.text() == "System":
+                system_menu = action
+                break
+
+        if system_menu is None:
+            return
+
+        # Try to find "Project manager" action in "System" menu
+        project_manager_action = None
+        for action in system_menu.menu().children():
+            if hasattr(action, "text") and action.text() == "Project Manager":
+                project_manager_action = action
+                break
+
+        # Remove "Project manager" action if was found
+        if project_manager_action is not None:
+            system_menu.menu().removeAction(project_manager_action)
+
+    log.info("Attempting to install scripts menu ...")
 
     add_build_workfiles_item()
     add_look_assigner_item()
     modify_workfiles()
+    remove_project_manager()
 
     try:
         import scriptsmenu.launchformaya as launchformaya
@@ -103,22 +128,18 @@ def deferred():
         return
 
     # load configuration of custom menu
-    settings = get_project_settings(os.environ['AVALON_PROJECT'])
-    config = settings['maya'].get('menu', {}).get('menu_items', [])
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    config = project_settings["maya"]["scriptsmenu"]["definition"]
+    _menu = project_settings["maya"]["scriptsmenu"]["name"]
 
-    # process title
-    title = settings['maya'].get('menu', {}).get('menu_title')
-    # expand env vars
-    if '$' in title:
-        title = os.environ.get(title.replace('$', ''))
-    # default to menu name
-    if not title:
-        title = self._menu.title()
+    if not config:
+        log.warning("Skipping studio menu, no definition found.")
+        return
 
     # run the launcher for Maya menu
     studio_menu = launchformaya.main(
-        title=title,
-        objectName=self._menu
+        title=_menu.title(),
+        objectName=_menu.title().lower().replace(" ", "_")
     )
 
     # apply configuration
@@ -128,7 +149,7 @@ def deferred():
 def uninstall():
     menu = _get_menu()
     if menu:
-        log.info("Attempting to uninstall..")
+        log.info("Attempting to uninstall ...")
 
         try:
             menu.deleteLater()
@@ -142,15 +163,13 @@ def install():
         log.info("Skipping openpype.menu initialization in batch mode..")
         return
 
-    uninstall()
     # Allow time for uninstallation to finish.
     cmds.evalDeferred(deferred)
 
 
 def popup():
-    """Pop-up the existing menu near the mouse cursor"""
+    """Pop-up the existing menu near the mouse cursor."""
     menu = _get_menu()
-
     cursor = QtGui.QCursor()
     point = cursor.pos()
     menu.exec_(point)

@@ -22,6 +22,7 @@ module.exports = {
                 "artist_hosts_maya",
                 "artist_hosts_blender",
                 "artist_hosts_harmony",
+                "artist_hosts_houdini",
                 "artist_hosts_aftereffects",
                 "artist_hosts_resolve",
                 "artist_hosts_photoshop",
@@ -65,7 +66,8 @@ module.exports = {
                     label: "Project Settings",
                     items: [
                         "project_settings/settings_project_global",
-                        "project_settings/settings_project_nuke"
+                        "project_settings/settings_project_nuke",
+                        "project_settings/settings_project_standalone"
                     ],
                 },
             ],

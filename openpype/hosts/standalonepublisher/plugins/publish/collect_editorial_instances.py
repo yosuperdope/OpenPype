@@ -2,7 +2,7 @@ import os
 import opentimelineio as otio
 import pyblish.api
 from openpype import lib as plib
-
+from copy import deepcopy
 
 class CollectInstances(pyblish.api.InstancePlugin):
     """Collect instances from editorial's OTIO sequence"""
@@ -181,12 +181,13 @@ class CollectInstances(pyblish.api.InstancePlugin):
                     }
                 })
                 for subset, properities in self.subsets.items():
-                    if properities["version"] == 0:
+                    version = properities.get("version")
+                    if version == 0:
                         properities.pop("version")
 
                     # adding Review-able instance
-                    subset_instance_data = instance_data.copy()
-                    subset_instance_data.update(properities)
+                    subset_instance_data = deepcopy(instance_data)
+                    subset_instance_data.update(deepcopy(properities))
                     subset_instance_data.update({
                         # unique attributes
                         "name": f"{name}_{subset}",

@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import copy
 import json
@@ -27,7 +28,8 @@ from . import (
 from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
-    get_workdir_with_workdir_data
+    get_workdir_with_workdir_data,
+    get_workfile_template_key_from_context
 )
 
 from .python_module_tools import (
@@ -708,6 +710,10 @@ class ApplicationLaunchContext:
             )
             self.kwargs["creationflags"] = flags
 
+        if not sys.stdout:
+            self.kwargs["stdout"] = subprocess.DEVNULL
+            self.kwargs["stderr"] = subprocess.DEVNULL
+
         self.prelaunch_hooks = None
         self.postlaunch_hooks = None
 
@@ -1100,7 +1106,7 @@ def prepare_host_environments(data, implementation_envs=True):
     asset_doc = data.get("asset_doc")
     # Add tools environments
     groups_by_name = {}
-    tool_by_group_name = collections.defaultdict(list)
+    tool_by_group_name = collections.defaultdict(dict)
     if asset_doc:
         # Make sure each tool group can be added only once
         for key in asset_doc["data"].get("tools_env") or []:
@@ -1108,12 +1114,14 @@ def prepare_host_environments(data, implementation_envs=True):
             if not tool:
                 continue
             groups_by_name[tool.group.name] = tool.group
-            tool_by_group_name[tool.group.name].append(tool)
+            tool_by_group_name[tool.group.name][tool.name] = tool
 
-        for group_name, group in groups_by_name.items():
+        for group_name in sorted(groups_by_name.keys()):
+            group = groups_by_name[group_name]
             environments.append(group.environment)
             added_env_keys.add(group_name)
-            for tool in tool_by_group_name[group_name]:
+            for tool_name in sorted(tool_by_group_name[group_name].keys()):
+                tool = tool_by_group_name[group_name][tool_name]
                 environments.append(tool.environment)
                 added_env_keys.add(tool.name)
 
@@ -1133,7 +1141,8 @@ def prepare_host_environments(data, implementation_envs=True):
         # Merge dictionaries
         env_values = _merge_env(tool_env, env_values)
 
-    loaded_env = _merge_env(acre.compute(env_values), data["env"])
+    merged_env = _merge_env(env_values, data["env"])
+    loaded_env = acre.compute(merged_env, cleanup=False)
 
     final_env = None
     # Add host specific environments
@@ -1184,7 +1193,10 @@ def apply_project_environments_value(project_name, env, project_settings=None):
 
     env_value = project_settings["global"]["project_environments"]
     if env_value:
-        env.update(_merge_env(acre.parse(env_value), env))
+        env.update(acre.compute(
+            _merge_env(acre.parse(env_value), env),
+            cleanup=False
+        ))
     return env
 
 
@@ -1225,8 +1237,18 @@ def prepare_context_environments(data):
 
     anatomy = data["anatomy"]
 
+    template_key = get_workfile_template_key_from_context(
+        asset_doc["name"],
+        task_name,
+        app.host_name,
+        project_name=project_name,
+        dbcon=data["dbcon"]
+    )
+
     try:
-        workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
+        workdir = get_workdir_with_workdir_data(
+            workdir_data, anatomy, template_key=template_key
+        )
 
     except Exception as exc:
         raise ApplicationLaunchFailed(
@@ -1297,9 +1319,17 @@ def _prepare_last_workfile(data, workdir):
     )
     data["start_last_workfile"] = start_last_workfile
 
+    workfile_startup = should_workfile_tool_start(
+        project_name, app.host_name, task_name
+    )
+    data["workfile_startup"] = workfile_startup
+
     # Store boolean as "0"(False) or "1"(True)
     data["env"]["AVALON_OPEN_LAST_WORKFILE"] = (
         str(int(bool(start_last_workfile)))
+    )
+    data["env"]["OPENPYPE_WORKFILE_TOOL_ON_START"] = (
+        str(int(bool(workfile_startup)))
     )
 
     _sub_msg = "" if start_last_workfile else " not"
@@ -1339,40 +1369,9 @@ def _prepare_last_workfile(data, workdir):
     data["last_workfile_path"] = last_workfile_path
 
 
-def should_start_last_workfile(
-    project_name, host_name, task_name, default_output=False
+def get_option_from_settings(
+    startup_presets, host_name, task_name, default_output
 ):
-    """Define if host should start last version workfile if possible.
-
-    Default output is `False`. Can be overriden with environment variable
-    `AVALON_OPEN_LAST_WORKFILE`, valid values without case sensitivity are
-    `"0", "1", "true", "false", "yes", "no"`.
-
-    Args:
-        project_name (str): Name of project.
-        host_name (str): Name of host which is launched. In avalon's
-            application context it's value stored in app definition under
-            key `"application_dir"`. Is not case sensitive.
-        task_name (str): Name of task which is used for launching the host.
-            Task name is not case sensitive.
-
-    Returns:
-        bool: True if host should start workfile.
-
-    """
-
-    project_settings = get_project_settings(project_name)
-    startup_presets = (
-        project_settings
-        ["global"]
-        ["tools"]
-        ["Workfiles"]
-        ["last_workfile_on_startup"]
-    )
-
-    if not startup_presets:
-        return default_output
-
     host_name_lowered = host_name.lower()
     task_name_lowered = task_name.lower()
 
@@ -1414,6 +1413,82 @@ def should_start_last_workfile(
             output = default_output
         return output
     return default_output
+
+
+def should_start_last_workfile(
+    project_name, host_name, task_name, default_output=False
+):
+    """Define if host should start last version workfile if possible.
+
+    Default output is `False`. Can be overriden with environment variable
+    `AVALON_OPEN_LAST_WORKFILE`, valid values without case sensitivity are
+    `"0", "1", "true", "false", "yes", "no"`.
+
+    Args:
+        project_name (str): Name of project.
+        host_name (str): Name of host which is launched. In avalon's
+            application context it's value stored in app definition under
+            key `"application_dir"`. Is not case sensitive.
+        task_name (str): Name of task which is used for launching the host.
+            Task name is not case sensitive.
+
+    Returns:
+        bool: True if host should start workfile.
+
+    """
+
+    project_settings = get_project_settings(project_name)
+    startup_presets = (
+        project_settings
+        ["global"]
+        ["tools"]
+        ["Workfiles"]
+        ["last_workfile_on_startup"]
+    )
+
+    if not startup_presets:
+        return default_output
+
+    return get_option_from_settings(
+        startup_presets, host_name, task_name, default_output)
+
+
+def should_workfile_tool_start(
+    project_name, host_name, task_name, default_output=False
+):
+    """Define if host should start workfile tool at host launch.
+
+    Default output is `False`. Can be overriden with environment variable
+    `OPENPYPE_WORKFILE_TOOL_ON_START`, valid values without case sensitivity are
+    `"0", "1", "true", "false", "yes", "no"`.
+
+    Args:
+        project_name (str): Name of project.
+        host_name (str): Name of host which is launched. In avalon's
+            application context it's value stored in app definition under
+            key `"application_dir"`. Is not case sensitive.
+        task_name (str): Name of task which is used for launching the host.
+            Task name is not case sensitive.
+
+    Returns:
+        bool: True if host should start workfile.
+
+    """
+
+    project_settings = get_project_settings(project_name)
+    startup_presets = (
+        project_settings
+        ["global"]
+        ["tools"]
+        ["Workfiles"]
+        ["open_workfile_tool_on_startup"]
+    )
+
+    if not startup_presets:
+        return default_output
+
+    return get_option_from_settings(
+        startup_presets, host_name, task_name, default_output)
 
 
 def compile_list_of_regexes(in_list):

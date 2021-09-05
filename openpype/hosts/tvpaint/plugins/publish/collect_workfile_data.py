@@ -39,7 +39,7 @@ class ResetTVPaintWorkfileMetadata(pyblish.api.Action):
 
 class CollectWorkfileData(pyblish.api.ContextPlugin):
     label = "Collect Workfile Data"
-    order = pyblish.api.CollectorOrder - 1.01
+    order = pyblish.api.CollectorOrder - 0.45
     hosts = ["tvpaint"]
     actions = [ResetTVPaintWorkfileMetadata]
 
@@ -155,6 +155,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "sceneMarkInState": mark_in_state == "set",
             "sceneMarkOut": int(mark_out_frame),
             "sceneMarkOutState": mark_out_state == "set",
+            "sceneStartFrame": int(lib.execute_george("tv_startframe")),
             "sceneBgColor": self._get_bg_color()
         }
         self.log.debug(

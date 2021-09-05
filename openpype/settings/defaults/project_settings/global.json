@@ -1,5 +1,13 @@
 {
     "publish": {
+        "ValidateEditorialAssetName": {
+            "enabled": true,
+            "optional": false
+        },
+        "ValidateVersion": {
+            "enabled": true,
+            "optional": false
+        },
         "IntegrateHeroVersion": {
             "enabled": true,
             "optional": true,
@@ -143,6 +151,7 @@
             "template_name_profiles": [
                 {
                     "families": [],
+                    "hosts": [],
                     "tasks": [],
                     "template_name": "publish"
                 },
@@ -152,6 +161,7 @@
                         "render",
                         "prerender"
                     ],
+                    "hosts": [],
                     "tasks": [],
                     "template_name": "render"
                 }
@@ -164,28 +174,6 @@
                     "template": ""
                 }
             ]
-        },
-        "ProcessSubmittedJobOnFarm": {
-            "enabled": true,
-            "deadline_department": "",
-            "deadline_pool": "",
-            "deadline_group": "",
-            "deadline_chunk_size": 1,
-            "deadline_priority": 50,
-            "publishing_script": "",
-            "skip_integration_repre_list": [],
-            "aov_filter": {
-                "maya": [
-                    ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
-                ],
-                "nuke": [],
-                "aftereffects": [
-                    ".*"
-                ],
-                "celaction": [
-                    ".*"
-                ]
-            }
         },
         "CleanUp": {
             "paterns": [],
@@ -249,15 +237,39 @@
                     ],
                     "tasks": [],
                     "template": "{family}{Task}"
+                },
+                {
+                    "families": [
+                        "renderLocal"
+                    ],
+                    "hosts": [
+                        "aftereffects"
+                    ],
+                    "tasks": [],
+                    "template": "render{Task}{Variant}"
                 }
             ]
         },
         "Workfiles": {
+            "workfile_template_profiles": [
+                {
+                    "task_types": [],
+                    "hosts": [],
+                    "workfile_template": "work"
+                }
+            ],
             "last_workfile_on_startup": [
                 {
                     "hosts": [],
                     "tasks": [],
                     "enabled": true
+                }
+            ],
+            "open_workfile_tool_on_startup": [
+                {
+                    "hosts": [],
+                    "tasks": [],
+                    "enabled": false
                 }
             ],
             "sw_folders": {
