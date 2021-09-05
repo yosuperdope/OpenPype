@@ -186,9 +186,5 @@
             }
         ]
     },
-    "filters": {},
-    "menu": {
-        "menu_title": "$AVALON_PROJECT",
-        "menu_items": []
-    }
+    "filters": {}
 }

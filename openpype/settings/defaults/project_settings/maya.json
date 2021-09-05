@@ -618,9 +618,5 @@
         "preset 2": {
             "ValidateNoAnimation": false
         }
-    },
-    "menu": {
-        "menu_title": "$AVALON_PROJECT",
-        "menu_items": []
     }
 }

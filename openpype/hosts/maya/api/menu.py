@@ -4,10 +4,7 @@ import logging
 
 from avalon.vendor.Qt import QtWidgets, QtGui
 from avalon.maya import pipeline
-from openpype.api import (
-    BuildWorkfile,
-    get_project_settings
-)
+from openpype.api import BuildWorkfile
 import maya.cmds as cmds
 from openpype.settings import get_project_settings
 
