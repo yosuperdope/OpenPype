@@ -288,6 +288,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "pluginInfo", {})
         )
 
+        # custom instance job and plugin data
+        instance_plugin_info = instance.data.get('pluginInfo', {})
+        instance_job_info = instance.data.get('jobInfo', {})
+
+        # custom instance env
+        instance_env = instance.data.get('env', {})
+
         context = instance.context
         workspace = context.data["workspaceDir"]
         anatomy = context.data['anatomy']
@@ -479,6 +486,10 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         environment["OPENPYPE_MAYA_VERSION"] = cmds.about(v=True)
         # to recognize job from PYPE for turning Event On/Off
         environment["OPENPYPE_RENDER_JOB"] = "1"
+
+        # pass in custom instance env
+        environment.update(instance_env)
+
         self.payload_skeleton["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,
@@ -563,6 +574,10 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
 
         self.preflight_check(instance)
+
+        # add jobInfo and pluginInfo variables from instance
+        payload["JobInfo"].update(instance_job_info)
+        payload["PluginInfo"].update(instance_plugin_info)
 
         # add jobInfo and pluginInfo variables from Settings
         payload["JobInfo"].update(self._job_info)
