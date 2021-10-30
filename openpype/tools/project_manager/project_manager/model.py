@@ -76,6 +76,7 @@ class ProjectModel(QtGui.QStandardItemModel):
 
 class ProjectProxyFilter(QtCore.QSortFilterProxyModel):
     """Filters default project item."""
+
     def __init__(self, *args, **kwargs):
         super(ProjectProxyFilter, self).__init__(*args, **kwargs)
         self._filter_default = False
@@ -1409,6 +1410,10 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         if bulk_writes:
             project_col.bulk_write(bulk_writes)
+
+        # create workspaces
+        from openpype_modules.workspace.lib import create_project_workspaces
+        create_project_workspaces(project_name)
 
         self.refresh_project()
 
